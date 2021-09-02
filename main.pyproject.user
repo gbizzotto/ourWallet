@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.15.0, 2021-08-24T21:00:51. -->
+<!-- Written by QtCreator 4.15.0, 2021-08-31T07:39:30. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -94,7 +94,7 @@
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">qt.qt6.610.gcc_64_kit</value>
    <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">-1</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">3</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">5</value>
    <value type="int" key="ProjectExplorer.Target.BuildConfigurationCount">0</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.DeployConfiguration.0">
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
@@ -173,16 +173,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/ui/addwalletfromxprvdialog.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/ui/addwalletfromxprvdialog.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/ui/addwalletfromxprvdialog.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/ui/addwalletdialog.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/ui/addwalletdialog.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/ui/addwalletdialog.py</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{79b77817-e3bf-4d16-9ea4-9675f61873eb}</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/ui/addwalletfromxprvdialog.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/ui/addwalletdialog.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet/ui</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet/ui</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.1">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -248,15 +248,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/Makefile</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/Makefile</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/Makefile</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/Makefile</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/ui/addwalletfromxprvdialog.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/ui/addwalletfromxprvdialog.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/ui/addwalletfromxprvdialog.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{b3d1d299-d889-47ef-aa72-ca7ffd358672}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/ui/addwalletfromxprvdialog.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet/ui</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.10">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -322,15 +323,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/ui/walletinfo.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/ui/walletinfo.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/ui/walletinfo.py</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/ui/walletinfo.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/main.pyproject.user</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/main.pyproject.user</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/main.pyproject.user</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{4a91f37c-cd8d-45a3-8147-9d9cfd6f14ba}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/main.pyproject.user</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet/ui</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.2">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -396,15 +398,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/ui/addwalletdialog.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/ui/addwalletdialog.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/ui/addwalletdialog.py</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/ui/addwalletdialog.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/ui/walletinfo.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/ui/walletinfo.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/ui/walletinfo.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{13816dfe-f181-4e74-9e4b-0d819942df3b}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/ui/walletinfo.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet/ui</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet/ui</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.3">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -470,16 +473,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/main.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/main.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/main.py</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{79b77817-e3bf-4d16-9ea4-9675f61873eb}</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/main.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/bip32utils/BIP32Key.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/bip32utils/BIP32Key.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/bip32utils/BIP32Key.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{66231f7b-7132-47cd-b149-afdaeecb329f}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/bip32utils/BIP32Key.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet/bip32utils</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.4">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -545,15 +548,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/bip32utils/Base58.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/bip32utils/Base58.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/bip32utils/Base58.py</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/bip32utils/Base58.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/ui/mainwindow.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/ui/mainwindow.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/ui/mainwindow.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{6c92da9a-64ae-43cd-9d2c-95a68250576d}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/ui/mainwindow.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet/bip32utils</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet/ui</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.5">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -619,15 +623,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/ui/addwalletfromwordsdialog.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/ui/addwalletfromwordsdialog.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/ui/addwalletfromwordsdialog.py</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/ui/addwalletfromwordsdialog.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/main.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/main.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/main.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{79b77817-e3bf-4d16-9ea4-9675f61873eb}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/main.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet/ui</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.6">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -693,15 +698,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/bip32utils/BIP32Key.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/bip32utils/BIP32Key.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/bip32utils/BIP32Key.py</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/bip32utils/BIP32Key.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/bip32utils/Base58.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/bip32utils/Base58.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/bip32utils/Base58.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{07ff9061-40ec-450e-ab82-a6929faea4a0}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/bip32utils/Base58.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet/bip32utils</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet/bip32utils</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.7">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -767,15 +773,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/ui/mainwindow.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/ui/mainwindow.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/ui/mainwindow.py</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/ui/mainwindow.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/Makefile</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/Makefile</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/Makefile</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{982d1525-c659-4f25-90db-6072b7ddbdd4}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/Makefile</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet/ui</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.8">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -841,15 +848,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/ui/chooseutxosdialog.py</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/ui/chooseutxosdialog.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/ui/chooseutxosdialog.py</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/ui/chooseutxosdialog.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/ui/addwalletfromwordsdialog.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/ui/addwalletfromwordsdialog.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/ui/addwalletfromwordsdialog.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{ab998645-d244-4919-aa11-bfe1c9955737}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/ui/addwalletfromwordsdialog.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet/ui</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet/ui</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.9">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -915,15 +923,16 @@
     <valuelist type="QVariantList" key="CustomOutputParsers"/>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/pymywallet/main.pyproject.user</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/pymywallet/main.pyproject.user</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/pymywallet/main.pyproject.user</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/pymywallet/main.pyproject.user</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">/home/joao/code/ourWallet/ui/chooseutxosdialog.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration./home/joao/code/ourWallet/ui/chooseutxosdialog.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/joao/code/ourWallet/ui/chooseutxosdialog.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{ef5d6f5e-d182-4115-9714-d89136de66e1}</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">/home/joao/code/ourWallet/ui/chooseutxosdialog.py</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/pymywallet</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">/home/joao/code/ourWallet/ui</value>
    </valuemap>
    <value type="int" key="ProjectExplorer.Target.RunConfigurationCount">11</value>
   </valuemap>

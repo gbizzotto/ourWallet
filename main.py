@@ -24,6 +24,10 @@ import qrcode
 import bip39
 import bip32utils
 
+import explorer
+import transactions
+import util
+
 testnet = True
 
 def set_qr_label(label, text):
@@ -35,20 +39,6 @@ def set_qr_label(label, text):
     qt_pixmap.loadFromData(buf.getvalue(), "PNG")
     label.setPixmap(qt_pixmap.scaled(label.width(), label.height(), Qt.KeepAspectRatio))
 
-class utxo:
-    def __init__(self, address, derivation, height, txid, vout, amount):
-        self.address = address
-        self.derivation = derivation
-        self.height = height
-        self.txid   = txid
-        self.vout   = vout
-        self.amount = amount
-    #def fromJson(self, json_utxo):
-    #    self.__dict__ = json.loads(json_utxo)
-    @staticmethod
-    def fromDict(d):
-        return utxo(d["address"], d["derivation"], d["height"], d["txid"], d["vout"], d["amount"])
-
 class Wallet:
     def __init__(self, name):
         self.name = name
@@ -56,21 +46,12 @@ class Wallet:
         self.from_words = False
         self.utxos = []
     @staticmethod
-    def fromDict(d):
+    def from_dict(d):
         if d["is_hd"]:
-            return HDWallet.fromDict(d)
+            return HDWallet.from_dict(d)
         w = Wallet(d["name"])
-        w.utxos = [utxo.fromDict(u) for u in d["utxos"]]
+        w.utxos = [transactions.TxOutput.from_dict(u) for u in d["utxos"]]
         return w
-
-class OurJsonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if hasattr(obj, "toJsonDict"):
-            return self.default(obj.toJsonDict())
-        elif hasattr(obj, "__dict__"):
-            return obj.__dict__
-        else:
-            return obj
 
 class KeysWallet(Wallet):
     def __init__(self, name):
@@ -81,6 +62,13 @@ class HDWallet(Wallet):
         super(HDWallet, self).__init__(name)
         self.is_hd = True
         self.root_key = root_key
+        self.utxos = []
+    def to_dict(self):
+        s = deepcopy(self)
+        if not isinstance(s.root_key, str):
+            s.root_key = s.root_key.ExtendedKey()
+        s.utxos = [util.to_dict(u) for u in s.utxos]
+        return util.to_dict(s.__dict__)
     def address(self, derivation):
         k = HDWallet.Derive(self.root_key, derivation)
         return k.Address()
@@ -103,14 +91,10 @@ class HDWallet(Wallet):
             else:
                 k = k.CKDpriv(int(d))
         return k
-    def toJsonDict(self):
-        d = deepcopy(self.__dict__)
-        d["root_key"] = self.root_key.ExtendedKey()
-        return d
     @staticmethod
-    def fromDict(d):
+    def from_dict(d):
         w = HDWallet(d["name"], bip32utils.BIP32Key.fromExtendedKey(d["root_key"]))
-        w.utxos = [utxo.fromDict(u) for u in d["utxos"]]
+        w.utxos = [transactions.TxOutput.from_dict(u) for u in d["utxos"]]
         return w
 
 class WalletInfoDialog(QDialog):
@@ -130,7 +114,7 @@ class WalletInfoDialog(QDialog):
         self.ui.keyRadio    .toggled.connect(self.updateQrCode)
         self.ui.xpubRadio   .toggled.connect(self.updateQrCode)
         self.ui.xprvRadio   .toggled.connect(self.updateQrCode)
-        utxo_columns_titles = ["height", "amount", "derivation", "address"]
+        utxo_columns_titles = ["confirmations", "amount", "derivation", "address"]
         self.ui.utxoTable.setColumnCount(len(utxo_columns_titles))
         self.ui.utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
         self.ui.utxoRefreshButton.clicked.connect(self.refresh_utxos)
@@ -186,60 +170,35 @@ class WalletInfoDialog(QDialog):
                     derivation = derivation_pattern.replace("x", str(i))
                     address = self.wallet.address(derivation)
                     print(derivation)
-                    for utxo in get_utxos(address, derivation):
+                    for utxo in explorer.get_utxos(address, derivation, testnet):
                         utxos.append(utxo)
                         max = i+2
                     i += 1
             else:
                 address = self.wallet.address(derivation_pattern)
-                for utxo in get_utxos(address, derivation_pattern):
+                for utxo in explorer.get_utxos(address, derivation_pattern, testnet):
                     utxos.append(utxo)
         balance = add_utxos_to_table(utxos, self.ui.utxoTable)
         self.wallet.utxos = utxos
         self.ui.balanceEdit.setText(str(balance))
 
-        print(json.dumps(self.wallet, cls=OurJsonEncoder))
+        print(json.dumps(util.to_dict(self.wallet)))
 
 def add_utxos_to_table(utxos, utxoTable):
     balance = 0
+    current_height = explorer.get_current_height(testnet)
     for utxo in utxos:
         balance += utxo.amount
-        add_utxo_to_table(utxo, utxoTable, utxo.derivation, utxo.address)
+        add_utxo_to_table(utxo, utxoTable, utxo.metadata.derivation, utxo.metadata.address, current_height)
     return balance
 
-def add_utxo_to_table(utxo, utxoTable, derivation, address):
+def add_utxo_to_table(utxo, utxoTable, derivation, address, current_height):
     row_idx = utxoTable.rowCount()
     utxoTable.insertRow(row_idx)
-    utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(utxo.height)))
+    utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
     utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
     utxoTable.setItem(row_idx, 2, QTableWidgetItem(derivation))
     utxoTable.setItem(row_idx, 3, QTableWidgetItem(address))
-
-def get_utxos(address, derivation):
-
-    print(address)
-
-    # getting data from blockstream
-    network = "testnet/" if testnet else ""
-    page = requests.get("https://blockstream.info/"+network+"api/address/"+address+"/utxo")
-    utxos = json.loads(page.text)
-    result = []
-    for u in utxos:
-        result.append(utxo(address, derivation, u["status"]["block_height"], u["txid"], u["vout"], u["value"]))
-    return result
-
-    # from blockcypher
-    #network = "test3/" if testnet else "main/"
-    #page = requests.get("https://api.blockcypher.com/v1/btc/"+network+"addrs/"+address+"?unspentOnly=1")
-    #utxos = json.loads(page.text)
-    #if "txrefs" not in utxos:
-    #    return []
-    #print(utxos)
-    #utxos = utxos["txrefs"]
-    #result = []
-    #for u in utxos:
-    #    result.append(utxo(address, derivation, u["block_height"], u["tx_hash"], u["tx_output_n"], u["value"]))
-    #return result
 
 # wise topic three session hint worry auction audit tomorrow noodle will auction
 
@@ -318,8 +277,11 @@ class ChooseUTXOsDialog(QDialog):
         utxoTable.setColumnCount(len(utxo_columns_titles))
         utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
 
+        current_height = explorer.get_current_height(testnet)
         for wallet in self.wallets.values():
             for utxo in wallet.utxos:
+                if utxo.parent_tx is None:
+                    utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
                 row_idx = utxoTable.rowCount()
                 utxoTable.insertRow(row_idx)
                 cb = QCheckBox()
@@ -327,9 +289,9 @@ class ChooseUTXOsDialog(QDialog):
                 utxoTable.setCellWidget(row_idx, 0, cb);
                 utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
                 utxoTable.setItem(row_idx, 2, QTableWidgetItem(wallet.name))
-                utxoTable.setItem(row_idx, 3, QTableWidgetItem(str(utxo.height)))
-                utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.derivation))
-                utxoTable.setItem(row_idx, 5, QTableWidgetItem(utxo.address))
+                utxoTable.setItem(row_idx, 3, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
+                utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.metadata.derivation))
+                utxoTable.setItem(row_idx, 5, QTableWidgetItem(utxo.metadata.address))
     def calculateSum(self):
         self.utxos = {}
         utxoTable = self.ui.UTXOsTableWidget
@@ -340,7 +302,7 @@ class ChooseUTXOsDialog(QDialog):
                 wallet_name = utxoTable.item(row_idx, 2).text()
                 derivation  = utxoTable.item(row_idx, 4).text()
                 for utxo in self.wallets[wallet_name].utxos:
-                    if utxo.derivation == derivation:
+                    if utxo.metadata.derivation == derivation:
                         if wallet_name not in self.utxos:
                             self.utxos[wallet_name] = []
                         self.utxos[wallet_name].append(utxo)
@@ -358,6 +320,7 @@ class MainWindow(QMainWindow):
         self.ui.menuWallets.insertMenu(self.ui.actionLoad_from_words, self.wallets_menu)
         self.ui.menuWallets.insertSeparator(self.ui.actionLoad_from_words)
         self.ui.selectUTXOsPushButton.pressed.connect(self.chooseutxos)
+        self.current_height = explorer.get_current_height(testnet)
 
         utxoTable = self.ui.UTXOsTableWidget
         utxo_columns_titles = ["Signed", "amount", "wallet", "confirmations", "derivation", "address"]
@@ -365,13 +328,11 @@ class MainWindow(QMainWindow):
         utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
 
         # TODO load wallets from ciphered file
-        j = '{"kjk": {"name": "kjk", "is_hd": true, "from_words": false, "utxos": [{"address": "tb1qlqh7r9q8pl2cuteegphp6sqt84j007fqjhwac2", "derivation": "m/0/0", "height": 2063046, "txid": "28cf752b51ec17d580231fb2beaa41948ddc39b17b7c2e356daaff8b3cf1f190", "vout": 1, "amount": 33000}], "root_key": "vprv9LDabV4oq3PVrmnqHcL3yiyRLVmL9W9M4w5VME2T2bMukCu8fMLGotEXKfo49xuCTtyeCkGsdK1CitKhWbvB9fyBxVYA3iGAvJWwKdPMzjd"}, "t": {"name": "t", "is_hd": true, "from_words": false, "utxos": [{"address": "mubWtZaRawp6KhLZkV9AQ9tGbRApy87UGA", "derivation": "m/0/0", "height": 2066017, "txid": "5168f1e5a2d68e4eb63626be78007463963ec30202247e5cfcf0e4cf2c631312", "vout": 1, "amount": 100000}, {"address": "msmVjeewKf2j8YazUEmJxkdvUzv4P9VaBM", "derivation": "m/1/0", "height": 2066017, "txid": "5168f1e5a2d68e4eb63626be78007463963ec30202247e5cfcf0e4cf2c631312", "vout": 0, "amount": 4578049}], "root_key": "tprv8gi3CTjd8fLft631wpevMQQYumH4AG8xXoxDR3szAihP1a8zQSUppijRJ8xChJo8W7SZTsd5yYgDxfDiHDRUdpZizGxxXjXhfeoH5xe77XU"}}'
-        self.wallets = {k:Wallet.fromDict(v) for (k,v) in json.loads(j).items()}
+        j = '{"kjk": {"name": "kjk", "is_hd": true, "from_words": false, "utxos": [{"amount": 33000, "scriptpubkey": "0014f82fe194070fd58e2f39406e1d400b3d64f7f920", "metadata": {"address": "tb1qlqh7r9q8pl2cuteegphp6sqt84j007fqjhwac2", "derivation": "m/0/0", "spent": false, "txid": "28cf752b51ec17d580231fb2beaa41948ddc39b17b7c2e356daaff8b3cf1f190", "vout": 1}}], "root_key": "vprv9LDabV4oq3PVrmnqHcL3yiyRLVmL9W9M4w5VME2T2bMukCu8fMLGotEXKfo49xuCTtyeCkGsdK1CitKhWbvB9fyBxVYA3iGAvJWwKdPMzjd"}, "t": {"name": "t", "is_hd": true, "from_words": false, "utxos": [], "root_key": "tprv8gi3CTjd8fLft631wpevMQQYumH4AG8xXoxDR3szAihP1a8zQSUppijRJ8xChJo8W7SZTsd5yYgDxfDiHDRUdpZizGxxXjXhfeoH5xe77XU"}}'
+        self.wallets = {k:Wallet.from_dict(v) for (k,v) in json.loads(j).items()}
         for w in self.wallets.values():
-            print(w.name)
             menuaction = self.wallets_menu.addAction(w.name)
             menuaction.triggered.connect(lambda *args,name=w.name:self.menu_action_wallet_name(name))
-            #print(menuaction)
 
     def add_wallet_from_words(self, event):
         dialog = AddWalletFromWordsDialog()
@@ -390,7 +351,6 @@ class MainWindow(QMainWindow):
             menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
 
     def menu_action_wallet_name(self, name):
-        print(name)
         if name not in self.wallets:
             return
         dialog = WalletInfoDialog(self.wallets[name])
@@ -398,8 +358,7 @@ class MainWindow(QMainWindow):
             pass
 
     def chooseutxos(self):
-        j = json.dumps(self.wallets, cls=OurJsonEncoder)
-        print(j)
+        j = json.dumps(util.to_dict(self.wallets))
         dialog = ChooseUTXOsDialog(self.wallets)
         if dialog.exec():
             utxoTable = self.ui.UTXOsTableWidget
@@ -413,9 +372,9 @@ class MainWindow(QMainWindow):
                     utxoTable.setCellWidget(row_idx, 0, cb);
                     utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
                     utxoTable.setItem(row_idx, 2, QTableWidgetItem(wallet_name))
-                    utxoTable.setItem(row_idx, 3, QTableWidgetItem(str(utxo.height)))
-                    utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.derivation))
-                    utxoTable.setItem(row_idx, 5, QTableWidgetItem(utxo.address))
+                    utxoTable.setItem(row_idx, 3, QTableWidgetItem(str(self.current_height - utxo.parent_tx.metadata.height)))
+                    utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.metadata.derivation))
+                    utxoTable.setItem(row_idx, 5, QTableWidgetItem(utxo.metadata.address))
 
 
 if __name__ == "__main__":
