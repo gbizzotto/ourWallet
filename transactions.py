@@ -7,8 +7,8 @@ import util
 from copy import deepcopy
 
 class TxByteStream:
-    def __init__(self, bytes_buffer):
-        self.buffer = bytes_buffer
+    def __init__(self, bytearray):
+        self.buffer = bytearray
         self.stream = io.BufferedReader(io.BytesIO(self.buffer))
     def peek(self):
         if self.eof():
@@ -37,6 +37,27 @@ class TxByteStream:
         elif c == 0xFF:
             return self.read_int(8)
 
+    def write(self, byte):
+        self.buffer.append(byte)
+    def write_chunk(self, bytes):
+        self.buffer.extend(bytes)
+    def write_int(self, size, value):
+        while size > 0:
+            self.buffer.append(value & 0xFF)
+            value >>= 8
+            size -= 1
+    def write_varint(self, value):
+        if value < 0xFD:
+            self.buffer.append(value)
+        elif value <= 0xFFFF:
+            self.write(0xFD)
+            self.write_int(2, value)
+        elif value <= 0xFFFFFFFF:
+            self.write(0xFE)
+            self.write_int(4, value)
+        else:
+            self.write(0xFF)
+            self.write_int(8, value)
 
 
 class TxInput:
@@ -51,7 +72,17 @@ class TxInput:
     def to_dict(self):
         d = deepcopy(self.__dict__)
         del d["parent_tx"]
-        return d
+        return util.to_dict(d)
+
+    def to_bin(self):
+        bin = bytearray()
+        stream = TxByteStream(bin)
+        stream.write_chunk(self.txid[::-1])
+        stream.write_int(4, self.vout)
+        stream.write_varint(len(self.scriptsig))
+        stream.write_chunk(self.scriptsig)
+        stream.write_int(4, self.sequence)
+        return bin
 
     @staticmethod
     def from_txbytestream(stream):
@@ -102,9 +133,17 @@ class TxOutput:
         del d["parent_tx"]
         return util.to_dict(d)
 
+    def to_bin(self):
+        bin = bytearray()
+        stream = TxByteStream(bin)
+        stream.write_int(8, self.amount)
+        stream.write_varint(len(self.scriptpubkey))
+        stream.write_chunk(self.scriptpubkey)
+        return bin
+
     @staticmethod
     def from_txbytestream(stream):
-        txout = TxInput()
+        txout = TxOutput()
         txout.amount = stream.read_int(8)
         txout.scriptpubkey = stream.read_chunk(stream.read_varint())
         txout.parent_tx    = None
@@ -144,6 +183,24 @@ class Transaction:
         self.witnesses = []
         self.locktime = 0
 
+    def to_bin(self):
+        bin = bytearray()
+        stream = TxByteStream(bin)
+        stream.write_int(4, self.version)
+        if self.has_segwit:
+            stream.write(0x00)
+            stream.write(0x01)
+        stream.write_varint(len(self.inputs))
+        for input in self.inputs:
+            bin.extend(input.to_bin())
+        stream.write_varint(len(self.outputs))
+        for output in self.outputs:
+            bin.extend(output.to_bin())
+        if self.has_segwit:
+            raise NotImplementedError
+        stream.write_int(4, self.locktime)
+        return bin
+
     @classmethod
     def from_hex(cls, hex_str):
         return cls.from_bin(binascii.unhexlify(hex_str))
@@ -181,12 +238,10 @@ class Transaction:
 
         return t
 
+    def prepare_copy_for_signature(self, vin, sighash):
+        return deepcopy(self)
 
     def __repr__(self):
         return json.dumps(util.to_dict(self), indent=2)
 
-if __name__ == "__main__":
-    tx_hex = '020000000186ef0d3c482f2eda2e1e1429fb27e8bb499d4cf47bfb070c18aad024ec2ecaea050000006a473044022054f10c0b888d149f7ef70f58586582b81d396fd8aa4ec959c22446bf14d80da502200b2ce0e64ea416c177eaf817f8d3bdb464b6126c01a36d9de960f45a4f1f46bf012103c9039f05d2260068c372656ee7e642f62cce37c6f53602bf995530be49d0dfc8ffffffff0628ad0200000000001976a914b4b4bebdcdc66e9706950b18d881568b04a44d1888ac4bd001000000000017a9141acd9b2b59d022d764685467c5ce7f42d5884a5d878a3c4101000000001976a914b10ddcc04f00fe99c3fa89e5d83d5b14d2f71c3a88ac09be02000000000017a9145de37aa191e2d5a6ea02b4d0c613b1e2664a3a898793150300000000001600142c76bd34431176904b2d56831f74fc844f4789102379b410000000001976a9142c311ac7324b51d37dbbee63dd1bfbdb7a056d6c88ac00000000'
-    #s = TxByteStream(binascii.unhexlify(tx_hex))
-    tx = Transaction.from_hex(tx_hex)
-    print(tx)
+
