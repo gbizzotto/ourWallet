@@ -1,5 +1,8 @@
 import io
 import hashlib
+import ecdsa
+import binascii
+from copy import deepcopy
 
 import transactions
 
@@ -97,15 +100,30 @@ class RunnerVM:
                 del stack[-1]
                 sighash = signature[-1]
                 signature = signature[:-1]
-                txcopy = tx.prepare_copy_for_signature(vin, sighash)
+                txcopy = deepcopy(tx)
+                txcopy.strip_for_signature(vin, sighash)
                 data = txcopy.to_bin()
-                print("tx:", data.hex())
-                data = hashlib.sha256(hashlib.sha256(data).digest()).digest()
-                print("txid:", data.hex())
+                # append 4 bytes of sighash
+                data.append(sighash)
+                data += b"\x00\x00\x00"
+                #data = hashlib.sha256(hashlib.sha256(data).digest()).digest()
+                data = hashlib.sha256(data).digest()
+                vk = ecdsa.VerifyingKey.from_string(pubkey, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
+                try:
+                    if vk.verify(signature, data, hashlib.sha256, sigdecode=ecdsa.util.sigdecode_der):
+                        stack.append(True)
+                    else:
+                        stack.append(False)
+                except:
+
+                    stack.append(False)
             else:
                 raise NotImplementedError(PrinterVM.to_string(op))
         if debug:
             cls.print_stack(stack)
+        if len(stack) == 0 or stack[-1] == 0 or stack[-1] == False:
+            return False
+        return True
 
     @classmethod
     def print_stack(cls, stack):
@@ -400,9 +418,12 @@ class PrinterVM:
     ]
 
 if __name__ == "__main__":
-    tx_hex = '020000000186ef0d3c482f2eda2e1e1429fb27e8bb499d4cf47bfb070c18aad024ec2ecaea050000006a473044022054f10c0b888d149f7ef70f58586582b81d396fd8aa4ec959c22446bf14d80da502200b2ce0e64ea416c177eaf817f8d3bdb464b6126c01a36d9de960f45a4f1f46bf012103c9039f05d2260068c372656ee7e642f62cce37c6f53602bf995530be49d0dfc8ffffffff0628ad0200000000001976a914b4b4bebdcdc66e9706950b18d881568b04a44d1888ac4bd001000000000017a9141acd9b2b59d022d764685467c5ce7f42d5884a5d878a3c4101000000001976a914b10ddcc04f00fe99c3fa89e5d83d5b14d2f71c3a88ac09be02000000000017a9145de37aa191e2d5a6ea02b4d0c613b1e2664a3a898793150300000000001600142c76bd34431176904b2d56831f74fc844f4789102379b410000000001976a9142c311ac7324b51d37dbbee63dd1bfbdb7a056d6c88ac00000000'
+    #tx_hex = '020000000186ef0d3c482f2eda2e1e1429fb27e8bb499d4cf47bfb070c18aad024ec2ecaea050000006a473044022054f10c0b888d149f7ef70f58586582b81d396fd8aa4ec959c22446bf14d80da502200b2ce0e64ea416c177eaf817f8d3bdb464b6126c01a36d9de960f45a4f1f46bf012103c9039f05d2260068c372656ee7e642f62cce37c6f53602bf995530be49d0dfc8ffffffff0628ad0200000000001976a914b4b4bebdcdc66e9706950b18d881568b04a44d1888ac4bd001000000000017a9141acd9b2b59d022d764685467c5ce7f42d5884a5d878a3c4101000000001976a914b10ddcc04f00fe99c3fa89e5d83d5b14d2f71c3a88ac09be02000000000017a9145de37aa191e2d5a6ea02b4d0c613b1e2664a3a898793150300000000001600142c76bd34431176904b2d56831f74fc844f4789102379b410000000001976a9142c311ac7324b51d37dbbee63dd1bfbdb7a056d6c88ac00000000'
+    tx_hex = '0100000001c997a5e56e104102fa209c6a852dd90660a20b2d9c352423edce25857fcd3704000000004847304402204e45e16932b8af514961a1d3a1a25fdf3f4f7732e9d624c6c61548ab5fb8cd410220181522ec8eca07de4860a4acdd12909d831cc56cbbac4622082221a8768d1d0901ffffffff0200ca9a3b00000000434104ae1a62fe09c5f51b13905f07f06b99a2f7159b2225f374cd378d71302fa28414e7aab37397f554a7df5f142c21c1b7303b8a0626f1baded5c72a704f7e6cd84cac00286bee0000000043410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3ac00000000'
     tx = transactions.Transaction.from_hex(tx_hex)
     print(tx)
+    txid = hashlib.sha256(hashlib.sha256(binascii.unhexlify(tx_hex)).digest()).digest()[::-1]
+    print("txid:", txid.hex())
 
     import explorer
     prev_tx = explorer.get_transaction(tx.inputs[0].txid.hex(), False)
@@ -413,4 +434,6 @@ if __name__ == "__main__":
     PrinterVM.run(tx.inputs[0].txoutput.scriptpubkey)
 
     full_script = tx.inputs[0].scriptsig + tx.inputs[0].txoutput.scriptpubkey
-    RunnerVM.run(tx, 0, full_script, True)
+    print(RunnerVM.run(tx, 0, full_script, debug=True))
+
+

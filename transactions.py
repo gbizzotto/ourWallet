@@ -235,11 +235,42 @@ class Transaction:
                 t.witnesses.append(wit_script)
 
         t.locktime = stream.read_int(4)
-
         return t
 
-    def prepare_copy_for_signature(self, vin, sighash):
-        return deepcopy(self)
+    def strip_for_signature(self, vin, sighash):
+        SIGHASH_ALL    = 1
+        SIGHASH_NONE   = 2
+        SIGHASH_SINGLE = 3
+        SIGHASH_ANYONECANPAY = 0x80
+
+        if self.inputs[vin].txoutput is None:
+            raise
+        else:
+            subscript = self.inputs[vin].txoutput.scriptpubkey
+
+        for input in self.inputs:
+            input.scriptsig = b'\x00'
+        self.inputs[vin].scriptsig = subscript
+
+        if sighash&3 == SIGHASH_ALL:
+            pass
+        elif sighash&3 == SIGHASH_NONE:
+            self.outputs = []
+            for i in range(0,vin):
+                self.inputs[i].sequence = 0
+            for i in range(vin+1,len(self.inputs)):
+                self.inputs[i].sequence = 0
+        elif sighash&3 == SIGHASH_SINGLE:
+            self.outputs = self.outputs[0:vin+1]
+            for output in self.outputs[0:-1]:
+                output.amount = -1
+                output.scriptpubkey = bytearray()
+            for i in range(0,vin):
+                self.inputs[i].sequence = 0
+            for i in range(vin+1,len(self.inputs)):
+                self.inputs[i].sequence = 0
+        if sighash&0x80 == SIGHASH_ANYONECANPAY:
+            self.inputs = [self.inputs[vin]]
 
     def __repr__(self):
         return json.dumps(util.to_dict(self), indent=2)
