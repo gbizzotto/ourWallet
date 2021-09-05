@@ -70,7 +70,7 @@ class Ui_AddWalletFromWordsDialog(object):
         AddWalletFromWordsDialog.setWindowTitle(QCoreApplication.translate("AddWalletFromWordsDialog", u"Load wallet from words", None))
         self.nameLineEdit.setPlaceholderText(QCoreApplication.translate("AddWalletFromWordsDialog", u"Wallet name", None))
         self.wordsPlainTextEdit.setPlaceholderText(QCoreApplication.translate("AddWalletFromWordsDialog", u"words", None))
-        self.pwLineEdit.setPlaceholderText(QCoreApplication.translate("AddWalletFromWordsDialog", u"Password (if any)", None))
+        self.pwLineEdit.setPlaceholderText(QCoreApplication.translate("AddWalletFromWordsDialog", u"BIP38 Password (if any)", None))
         self.warningLabel.setText("")
     # retranslateUi
 

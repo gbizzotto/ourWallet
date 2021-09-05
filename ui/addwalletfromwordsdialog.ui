@@ -41,7 +41,7 @@
         <enum>QLineEdit::Password</enum>
        </property>
        <property name="placeholderText">
-        <string>Password (if any)</string>
+        <string>BIP38 Password (if any)</string>
        </property>
       </widget>
      </item>

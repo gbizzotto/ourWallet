@@ -154,7 +154,7 @@
          </widget>
         </item>
         <item row="0" column="0">
-         <widget class="QCheckBox" name="nLockTimeCheckBox">
+         <widget class="QRadioButton" name="nLockTimeRadioButton">
           <property name="text">
            <string>nLockTime</string>
           </property>
@@ -163,9 +163,9 @@
        </layout>
       </item>
       <item>
-       <widget class="QCheckBox" name="RBFCheckBox">
+       <widget class="QRadioButton" name="PreventFeeSnipingRadioButton">
         <property name="text">
-         <string>RBF</string>
+         <string>Prevent fee sniping</string>
         </property>
         <property name="checked">
          <bool>true</bool>
@@ -173,12 +173,12 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="PreventFeeSnipingCheckBox">
+       <widget class="QCheckBox" name="RBFCheckBox">
         <property name="text">
-         <string>Prevent fee sniping</string>
+         <string>Make final</string>
         </property>
         <property name="checked">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -198,6 +198,13 @@
          <widget class="QPushButton" name="signAllPUshButton">
           <property name="text">
            <string>Sign all mine</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="verifyPushButton">
+          <property name="text">
+           <string>Verify</string>
           </property>
          </widget>
         </item>
@@ -268,12 +275,12 @@
   </action>
   <action name="actionLoad_from_words">
    <property name="text">
-    <string>Load from words</string>
+    <string>Regenerate from words</string>
    </property>
   </action>
   <action name="actionLoad_from_xprv">
    <property name="text">
-    <string>Load from xprv...</string>
+    <string>Regenerate from xprv...</string>
    </property>
   </action>
   <action name="actionNew_HD">

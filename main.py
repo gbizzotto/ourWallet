@@ -27,6 +27,7 @@ import bip32utils
 import explorer
 import transactions
 import util
+import wallets
 
 testnet = True
 
@@ -39,63 +40,6 @@ def set_qr_label(label, text):
     qt_pixmap.loadFromData(buf.getvalue(), "PNG")
     label.setPixmap(qt_pixmap.scaled(label.width(), label.height(), Qt.KeepAspectRatio))
 
-class Wallet:
-    def __init__(self, name):
-        self.name = name
-        self.is_hd = False
-        self.from_words = False
-        self.utxos = []
-    @staticmethod
-    def from_dict(d):
-        if d["is_hd"]:
-            return HDWallet.from_dict(d)
-        w = Wallet(d["name"])
-        w.utxos = [transactions.TxOutput.from_dict(u) for u in d["utxos"]]
-        return w
-
-class KeysWallet(Wallet):
-    def __init__(self, name):
-        super(KeysWallet, self).__init__(name)
-
-class HDWallet(Wallet):
-    def __init__(self, name, root_key):
-        super(HDWallet, self).__init__(name)
-        self.is_hd = True
-        self.root_key = root_key
-        self.utxos = []
-    def to_dict(self):
-        s = deepcopy(self)
-        if not isinstance(s.root_key, str):
-            s.root_key = s.root_key.ExtendedKey()
-        s.utxos = [util.to_dict(u) for u in s.utxos]
-        return util.to_dict(s.__dict__)
-    def address(self, derivation):
-        k = HDWallet.Derive(self.root_key, derivation)
-        return k.Address()
-    def privkey(self, derivation):
-        k = HDWallet.Derive(self.root_key, derivation)
-        return k.WalletImportFormat()
-    def xprv(self, derivation):
-        k = HDWallet.Derive(self.root_key, derivation)
-        return k.ExtendedKey(private=True)
-    def xpub(self, derivation):
-        k = HDWallet.Derive(self.root_key, derivation)
-        return k.ExtendedKey(private=False)
-    def Derive(root_key, derivation):
-        k = root_key
-        for d in derivation.split('/'):
-            if d == 'm':
-                continue
-            elif d[-1] == "'":
-                k = k.CKDpriv(int(d[:-1])+bip32utils.BIP32_HARDEN)
-            else:
-                k = k.CKDpriv(int(d))
-        return k
-    @staticmethod
-    def from_dict(d):
-        w = HDWallet(d["name"], bip32utils.BIP32Key.fromExtendedKey(d["root_key"]))
-        w.utxos = [transactions.TxOutput.from_dict(u) for u in d["utxos"]]
-        return w
 
 class WalletInfoDialog(QDialog):
     def __init__(self, wallet):
@@ -195,6 +139,8 @@ def add_utxos_to_table(utxos, utxoTable):
 def add_utxo_to_table(utxo, utxoTable, derivation, address, current_height):
     row_idx = utxoTable.rowCount()
     utxoTable.insertRow(row_idx)
+    if utxo.parent_tx is None:
+        utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
     utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
     utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
     utxoTable.setItem(row_idx, 2, QTableWidgetItem(derivation))
@@ -225,9 +171,7 @@ class AddWalletFromWordsDialog(QDialog):
             return
         words = " ".join(str(self.ui.wordsPlainTextEdit.toPlainText()).split())
         password = str(self.ui.pwLineEdit.text())
-        seed = bip39.phrase_to_seed(words, password)
-        key = bip32utils.BIP32Key.fromEntropy(seed, testnet=testnet)
-        self.wallet = HDWallet(self.ui.nameLineEdit.text(), key)
+        self.wallet = wallets.WordsWallet(self.ui.nameLineEdit.text(), words, password, testnet)
         super(AddWalletFromWordsDialog, self).accept()
 
 class AddWalletFromXprvDialog(QDialog):
@@ -259,17 +203,15 @@ class AddWalletFromXprvDialog(QDialog):
     def accept(self):
         if not self.checks():
             return
-        xkey = self.ui.xprvPlainTextEdit.toPlainText()
-        key = bip32utils.BIP32Key.fromExtendedKey(xkey)
-        self.wallet = HDWallet(self.ui.nameLineEdit.text(), key)
+        self.wallet = wallets.ExtendedKeyWallet(self.ui.nameLineEdit.text(), self.ui.xprvPlainTextEdit.toPlainText())
         super(AddWalletFromXprvDialog, self).accept()
 
 class ChooseUTXOsDialog(QDialog):
-    def __init__(self, wallets):
+    def __init__(self, ws):
         super(ChooseUTXOsDialog, self).__init__()
         self.ui = Ui_ChooseUTXOsDialog()
         self.ui.setupUi(self)
-        self.wallets = wallets
+        self.wallets = ws
         self.utxos = []
 
         utxoTable = self.ui.UTXOsTableWidget
@@ -327,12 +269,14 @@ class MainWindow(QMainWindow):
         utxoTable.setColumnCount(len(utxo_columns_titles))
         utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
 
-        # TODO load wallets from ciphered file
-        j = '{"kjk": {"name": "kjk", "is_hd": true, "from_words": false, "utxos": [{"amount": 33000, "scriptpubkey": "0014f82fe194070fd58e2f39406e1d400b3d64f7f920", "metadata": {"address": "tb1qlqh7r9q8pl2cuteegphp6sqt84j007fqjhwac2", "derivation": "m/0/0", "spent": false, "txid": "28cf752b51ec17d580231fb2beaa41948ddc39b17b7c2e356daaff8b3cf1f190", "vout": 1}}], "root_key": "vprv9LDabV4oq3PVrmnqHcL3yiyRLVmL9W9M4w5VME2T2bMukCu8fMLGotEXKfo49xuCTtyeCkGsdK1CitKhWbvB9fyBxVYA3iGAvJWwKdPMzjd"}, "t": {"name": "t", "is_hd": true, "from_words": false, "utxos": [], "root_key": "tprv8gi3CTjd8fLft631wpevMQQYumH4AG8xXoxDR3szAihP1a8zQSUppijRJ8xChJo8W7SZTsd5yYgDxfDiHDRUdpZizGxxXjXhfeoH5xe77XU"}}'
-        self.wallets = {k:Wallet.from_dict(v) for (k,v) in json.loads(j).items()}
-        for w in self.wallets.values():
-            menuaction = self.wallets_menu.addAction(w.name)
-            menuaction.triggered.connect(lambda *args,name=w.name:self.menu_action_wallet_name(name))
+        self.wallets = {}
+
+        ## TODO load wallets from ciphered file
+        #j = '{"kjk": {"name": "kjk", "is_hd": true, "from_words": false, "utxos": [{"amount": 33000, "scriptpubkey": "0014f82fe194070fd58e2f39406e1d400b3d64f7f920", "metadata": {"address": "tb1qlqh7r9q8pl2cuteegphp6sqt84j007fqjhwac2", "derivation": "m/0/0", "spent": false, "txid": "28cf752b51ec17d580231fb2beaa41948ddc39b17b7c2e356daaff8b3cf1f190", "vout": 1}}], "root_key": "vprv9LDabV4oq3PVrmnqHcL3yiyRLVmL9W9M4w5VME2T2bMukCu8fMLGotEXKfo49xuCTtyeCkGsdK1CitKhWbvB9fyBxVYA3iGAvJWwKdPMzjd"}, "t": {"name": "t", "is_hd": true, "from_words": false, "utxos": [], "root_key": "tprv8gi3CTjd8fLft631wpevMQQYumH4AG8xXoxDR3szAihP1a8zQSUppijRJ8xChJo8W7SZTsd5yYgDxfDiHDRUdpZizGxxXjXhfeoH5xe77XU"}}'
+        #self.wallets = {k:wallets.Wallet.from_dict(v) for (k,v) in json.loads(j).items()}
+        #for w in self.wallets.values():
+        #    menuaction = self.wallets_menu.addAction(w.name)
+        #    menuaction.triggered.connect(lambda *args,name=w.name:self.menu_action_wallet_name(name))
 
     def add_wallet_from_words(self, event):
         dialog = AddWalletFromWordsDialog()
@@ -341,6 +285,9 @@ class MainWindow(QMainWindow):
             self.wallets[w.name] = w
             menuaction = self.wallets_menu.addAction(w.name)
             menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
+            dialog = WalletInfoDialog(self.wallets[w.name])
+            if dialog.exec():
+                pass
 
     def add_wallet_from_xprv(self, event):
         dialog = AddWalletFromXprvDialog()
@@ -349,6 +296,9 @@ class MainWindow(QMainWindow):
             self.wallets[w.name] = w
             menuaction = self.wallets_menu.addAction(w.name)
             menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
+            dialog = WalletInfoDialog(self.wallets[w.name])
+            if dialog.exec():
+                pass
 
     def menu_action_wallet_name(self, name):
         if name not in self.wallets:

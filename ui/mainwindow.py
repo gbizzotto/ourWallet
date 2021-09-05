@@ -132,25 +132,25 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addWidget(self.locktimeLineEdit, 0, 2, 1, 1)
 
-        self.nLockTimeCheckBox = QCheckBox(self.centralwidget)
-        self.nLockTimeCheckBox.setObjectName(u"nLockTimeCheckBox")
+        self.nLockTimeRadioButton = QRadioButton(self.centralwidget)
+        self.nLockTimeRadioButton.setObjectName(u"nLockTimeRadioButton")
 
-        self.gridLayout.addWidget(self.nLockTimeCheckBox, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.nLockTimeRadioButton, 0, 0, 1, 1)
 
 
         self.verticalLayout_3.addLayout(self.gridLayout)
 
+        self.PreventFeeSnipingRadioButton = QRadioButton(self.centralwidget)
+        self.PreventFeeSnipingRadioButton.setObjectName(u"PreventFeeSnipingRadioButton")
+        self.PreventFeeSnipingRadioButton.setChecked(True)
+
+        self.verticalLayout_3.addWidget(self.PreventFeeSnipingRadioButton)
+
         self.RBFCheckBox = QCheckBox(self.centralwidget)
         self.RBFCheckBox.setObjectName(u"RBFCheckBox")
-        self.RBFCheckBox.setChecked(True)
+        self.RBFCheckBox.setChecked(False)
 
         self.verticalLayout_3.addWidget(self.RBFCheckBox)
-
-        self.PreventFeeSnipingCheckBox = QCheckBox(self.centralwidget)
-        self.PreventFeeSnipingCheckBox.setObjectName(u"PreventFeeSnipingCheckBox")
-        self.PreventFeeSnipingCheckBox.setChecked(True)
-
-        self.verticalLayout_3.addWidget(self.PreventFeeSnipingCheckBox)
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
@@ -165,6 +165,11 @@ class Ui_MainWindow(object):
         self.signAllPUshButton.setObjectName(u"signAllPUshButton")
 
         self.horizontalLayout_3.addWidget(self.signAllPUshButton)
+
+        self.verifyPushButton = QPushButton(self.centralwidget)
+        self.verifyPushButton.setObjectName(u"verifyPushButton")
+
+        self.horizontalLayout_3.addWidget(self.verifyPushButton)
 
         self.exportPushButton = QPushButton(self.centralwidget)
         self.exportPushButton.setObjectName(u"exportPushButton")
@@ -215,8 +220,8 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"myTxBuilderOrSomething", None))
         self.actionImport.setText(QCoreApplication.translate("MainWindow", u"Import...", None))
-        self.actionLoad_from_words.setText(QCoreApplication.translate("MainWindow", u"Load from words", None))
-        self.actionLoad_from_xprv.setText(QCoreApplication.translate("MainWindow", u"Load from xprv...", None))
+        self.actionLoad_from_words.setText(QCoreApplication.translate("MainWindow", u"Regenerate from words", None))
+        self.actionLoad_from_xprv.setText(QCoreApplication.translate("MainWindow", u"Regenerate from xprv...", None))
         self.actionNew_HD.setText(QCoreApplication.translate("MainWindow", u"New HD...", None))
         self.actionNew_empty.setText(QCoreApplication.translate("MainWindow", u"New empty...", None))
         self.actionWallets.setText(QCoreApplication.translate("MainWindow", u"Wallets", None))
@@ -227,10 +232,11 @@ class Ui_MainWindow(object):
         self.removeOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
         self.dateTimeEdit.setDisplayFormat(QCoreApplication.translate("MainWindow", u"yyyy-MM-dd HH:mm zzz", None))
         self.locktimeLineEdit.setText(QCoreApplication.translate("MainWindow", u"2000000000", None))
-        self.nLockTimeCheckBox.setText(QCoreApplication.translate("MainWindow", u"nLockTime", None))
-        self.RBFCheckBox.setText(QCoreApplication.translate("MainWindow", u"RBF", None))
-        self.PreventFeeSnipingCheckBox.setText(QCoreApplication.translate("MainWindow", u"Prevent fee sniping", None))
+        self.nLockTimeRadioButton.setText(QCoreApplication.translate("MainWindow", u"nLockTime", None))
+        self.PreventFeeSnipingRadioButton.setText(QCoreApplication.translate("MainWindow", u"Prevent fee sniping", None))
+        self.RBFCheckBox.setText(QCoreApplication.translate("MainWindow", u"Make final", None))
         self.signAllPUshButton.setText(QCoreApplication.translate("MainWindow", u"Sign all mine", None))
+        self.verifyPushButton.setText(QCoreApplication.translate("MainWindow", u"Verify", None))
         self.exportPushButton.setText(QCoreApplication.translate("MainWindow", u"Export", None))
         self.broadcastPushButton.setText(QCoreApplication.translate("MainWindow", u"Broadcast", None))
         self.menuTX.setTitle(QCoreApplication.translate("MainWindow", u"TX", None))
