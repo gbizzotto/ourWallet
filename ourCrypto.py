@@ -1,12 +1,15 @@
 from Crypto.Cipher import AES
+import hashlib
 
 iv = b"ourWalletCryptoX"
 
 def encrypt(plain_text, key):
-    return AES.new(key, AES.MODE_CFB, iv).encrypt(plain_text)
+    key = hashlib.sha256(hashlib.sha256(key).digest()).digest()[:16]
+    return AES.new(key, AES.MODE_CFB, iv).encrypt(str.encode(plain_text))
 
 def decrypt(enc_text, key):
-    return AES.new(key, AES.MODE_CFB, iv).decrypt(enc_text)
+    key = hashlib.sha256(hashlib.sha256(key).digest()).digest()[:16]
+    return AES.new(key, AES.MODE_CFB, iv).decrypt(enc_text).decode()
 
 if __name__ == "__main__":
     plaintext = b"Testing AES encryption/decryption in techieshouts.com"

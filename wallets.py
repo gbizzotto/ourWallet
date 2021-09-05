@@ -7,21 +7,24 @@ import json
 
 import util
 
+def from_dict(d):
+    cls = globals()[d["wallet_type"]]
+    w = cls.from_dict(d)
+    w.utxos = [transactions.TxOutput.from_dict(u) for u in d["utxos"]]
+    w.filename = None
+    return w
+
 class Wallet:
-    def __init__(self, name):
+    def __init__(self, name, filename=None):
         self.name = name
         self.utxos = []
+        self.filename = filename
     def to_dict(self):
         d = deepcopy(self)
         # returns the class name of the correct subclass
+        del d.__dict__["filename"]
         d.wallet_type = type(self).__name__
         return util.to_dict(d.__dict__)
-    @staticmethod
-    def from_dict(d):
-        cls = globals()[d["wallet_type"]]
-        w = cls.from_dict(d)
-        w.utxos = [transactions.TxOutput.from_dict(u) for u in d["utxos"]]
-        return w
 
 # abstract class
 class HDWallet(Wallet):
@@ -87,12 +90,12 @@ class KeysWallet(Wallet):
 if __name__ == "__main__":
     ww = WordsWallet("test_ww", "run fog exhibit wolf whisper wet luxury tiger spell exercise aunt way", "", True)
     d = ww.to_dict()
-    ww2 = Wallet.from_dict(d)
+    ww2 = from_dict(d)
     assert json.dumps(ww.to_dict()) == json.dumps(ww2.to_dict())
 
     ekw = ExtendedKeyWallet("test_ekw", "tprv8ZgxMBicQKsPdPMUwkx6qrBjTPbA1kq1DXdvcaGfrhRDsGY6yN7uEGUBcvQ9VcD43fxMQXTHb7jjetcea4R8RMQLeArQLJPWiCSQ9WtrK8J")
     d = ekw.to_dict()
-    ekw2 = Wallet.from_dict(d)
+    ekw2 = from_dict(d)
     assert json.dumps(ekw.to_dict()) == json.dumps(ekw2.to_dict())
 
     print("Ok")

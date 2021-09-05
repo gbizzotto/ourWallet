@@ -9,6 +9,8 @@ def get_transaction(txid, testnet):
     #if txid in transactions:
     #    return transactions[txid]
 
+    print("explorer get_transaction", txid)
+
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid+"/hex")
@@ -25,6 +27,8 @@ def get_transaction(txid, testnet):
 
 
 def is_output_spent(txid, vout, testnet):
+    print("explorer is_output_spent", txid, vout)
+
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid+"/outspend/"+str(vout))
@@ -32,6 +36,8 @@ def is_output_spent(txid, vout, testnet):
 
 
 def get_utxos(address, derivation, testnet):
+    print("explorer get_utxos", address, derivation)
+
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/address/"+address+"/utxo")
@@ -53,12 +59,16 @@ def get_utxos(address, derivation, testnet):
     # blockcypher
 
 def get_output_scriptpubkey(txid, vout, testnet):
+    print("explorer get_output_scriptpubkey", txid, vout)
+
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"tx/"+txid)
     return json.loads(page.text)["vout"][vout]["scriptpubkey"]
 
 def get_current_height(testnet):
+    print("explorer get_current_height")
+
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"/api/blocks/tip/height")

@@ -80,6 +80,11 @@ class Ui_walletInfoDialog(object):
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_4)
 
+        self.saveButton = QPushButton(self.tab_2)
+        self.saveButton.setObjectName(u"saveButton")
+
+        self.verticalLayout_4.addWidget(self.saveButton)
+
         self.tabWidget.addTab(self.tab_2, "")
         self.tab = QWidget()
         self.tab.setObjectName(u"tab")
@@ -195,6 +200,7 @@ class Ui_walletInfoDialog(object):
         self.label.setText(QCoreApplication.translate("walletInfoDialog", u"Balance", None))
         self.label_3.setText(QCoreApplication.translate("walletInfoDialog", u"Derivation scheme", None))
         self.utxoRefreshButton.setText(QCoreApplication.translate("walletInfoDialog", u"Refresh", None))
+        self.saveButton.setText(QCoreApplication.translate("walletInfoDialog", u"Save", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QCoreApplication.translate("walletInfoDialog", u"UTXOs", None))
         self.addressRadio.setText(QCoreApplication.translate("walletInfoDialog", u"address", None))
         self.keyRadio.setText(QCoreApplication.translate("walletInfoDialog", u"private key", None))

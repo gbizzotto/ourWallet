@@ -248,6 +248,8 @@
      <string>Wallets</string>
     </property>
     <addaction name="separator"/>
+    <addaction name="actionOpen"/>
+    <addaction name="separator"/>
     <addaction name="actionLoad_from_words"/>
     <addaction name="actionLoad_from_xprv"/>
     <addaction name="actionNew_HD"/>
@@ -296,6 +298,11 @@
   <action name="actionWallets">
    <property name="text">
     <string>Wallets</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open...</string>
    </property>
   </action>
  </widget>

@@ -8,7 +8,7 @@ import requests
 import json
 from copy import deepcopy
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction
+from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog
 from PySide6.QtCore import QFile, QIODevice, Qt
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QPixmap
@@ -28,6 +28,7 @@ import explorer
 import transactions
 import util
 import wallets
+import ourCrypto
 
 testnet = True
 
@@ -62,6 +63,7 @@ class WalletInfoDialog(QDialog):
         self.ui.utxoTable.setColumnCount(len(utxo_columns_titles))
         self.ui.utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
         self.ui.utxoRefreshButton.clicked.connect(self.refresh_utxos)
+        self.ui.saveButton.clicked.connect(self.save)
 
         balance = add_utxos_to_table(wallet.utxos, self.ui.utxoTable)
         self.ui.balanceEdit.setText(str(balance))
@@ -113,7 +115,6 @@ class WalletInfoDialog(QDialog):
                 while i < max:
                     derivation = derivation_pattern.replace("x", str(i))
                     address = self.wallet.address(derivation)
-                    print(derivation)
                     for utxo in explorer.get_utxos(address, derivation, testnet):
                         utxos.append(utxo)
                         max = i+2
@@ -126,7 +127,17 @@ class WalletInfoDialog(QDialog):
         self.wallet.utxos = utxos
         self.ui.balanceEdit.setText(str(balance))
 
-        print(json.dumps(util.to_dict(self.wallet)))
+    def save(self):
+        filename = self.wallet.filename
+        if filename is None:
+            filename = QFileDialog.getSaveFileName(self, 'Save wallet to file', filter="Wallet files(*.wlt);;All files(*)")[0]
+            if len(filename) == 0:
+                return
+        j = json.dumps(self.wallet.to_dict())
+        bin = ourCrypto.encrypt(j, b"ourPassword")
+        file = open(filename, 'wb')
+        file.write(bin)
+        self.wallet.filename = filename
 
 def add_utxos_to_table(utxos, utxoTable):
     balance = 0
@@ -258,6 +269,7 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.ui.actionLoad_from_words.triggered.connect(self.add_wallet_from_words)
         self.ui.actionLoad_from_xprv .triggered.connect(self.add_wallet_from_xprv )
+        self.ui.actionOpen           .triggered.connect(self.open_wallet_file     )
         self.wallets_menu = QMenu("Wallets info")
         self.ui.menuWallets.insertMenu(self.ui.actionLoad_from_words, self.wallets_menu)
         self.ui.menuWallets.insertSeparator(self.ui.actionLoad_from_words)
@@ -271,34 +283,43 @@ class MainWindow(QMainWindow):
 
         self.wallets = {}
 
-        ## TODO load wallets from ciphered file
-        #j = '{"kjk": {"name": "kjk", "is_hd": true, "from_words": false, "utxos": [{"amount": 33000, "scriptpubkey": "0014f82fe194070fd58e2f39406e1d400b3d64f7f920", "metadata": {"address": "tb1qlqh7r9q8pl2cuteegphp6sqt84j007fqjhwac2", "derivation": "m/0/0", "spent": false, "txid": "28cf752b51ec17d580231fb2beaa41948ddc39b17b7c2e356daaff8b3cf1f190", "vout": 1}}], "root_key": "vprv9LDabV4oq3PVrmnqHcL3yiyRLVmL9W9M4w5VME2T2bMukCu8fMLGotEXKfo49xuCTtyeCkGsdK1CitKhWbvB9fyBxVYA3iGAvJWwKdPMzjd"}, "t": {"name": "t", "is_hd": true, "from_words": false, "utxos": [], "root_key": "tprv8gi3CTjd8fLft631wpevMQQYumH4AG8xXoxDR3szAihP1a8zQSUppijRJ8xChJo8W7SZTsd5yYgDxfDiHDRUdpZizGxxXjXhfeoH5xe77XU"}}'
-        #self.wallets = {k:wallets.Wallet.from_dict(v) for (k,v) in json.loads(j).items()}
-        #for w in self.wallets.values():
-        #    menuaction = self.wallets_menu.addAction(w.name)
-        #    menuaction.triggered.connect(lambda *args,name=w.name:self.menu_action_wallet_name(name))
+    def open_wallet_file(self):
+        filename = QFileDialog.getOpenFileName(self, 'Open wallet', filter="Wallet files(*.wlt);;All files(*)")[0]
+        if len(filename) == 0:
+            return
+        file = open(filename, 'rb')
+        bin = file.read()
+        j = ourCrypto.decrypt(bin, b"ourPassword")
+        d = json.loads(j)
+        w = wallets.from_dict(d)
+        w.filename = filename
+        self.wallets[w.name] = w
+        menuaction = self.wallets_menu.addAction(w.name)
+        menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
+
+    def add_wallet_from_dialog(self, dialog):
+        if dialog.exec():
+            w = dialog.wallet
+            self.wallets[w.name] = w
+            menuaction = self.wallets_menu.addAction(w.name)
+            menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
+            dialog = WalletInfoDialog(self.wallets[w.name])
+            if dialog.exec():
+                pass
+            filename = QFileDialog.getSaveFileName(self, 'Save wallet to file', filter="Wallet files(*.wlt);;All files(*)")[0]
+            if len(filename) == 0:
+                return
+            j = json.dumps(w.to_dict())
+            bin = ourCrypto.encrypt(j, b"ourPassword")
+            file = open(filename, 'wb')
+            file.write(bin)
+            w.filename = filename
 
     def add_wallet_from_words(self, event):
-        dialog = AddWalletFromWordsDialog()
-        if dialog.exec():
-            w = dialog.wallet
-            self.wallets[w.name] = w
-            menuaction = self.wallets_menu.addAction(w.name)
-            menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
-            dialog = WalletInfoDialog(self.wallets[w.name])
-            if dialog.exec():
-                pass
+        self.add_wallet_from_dialog(AddWalletFromWordsDialog())
 
     def add_wallet_from_xprv(self, event):
-        dialog = AddWalletFromXprvDialog()
-        if dialog.exec():
-            w = dialog.wallet
-            self.wallets[w.name] = w
-            menuaction = self.wallets_menu.addAction(w.name)
-            menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
-            dialog = WalletInfoDialog(self.wallets[w.name])
-            if dialog.exec():
-                pass
+        self.add_wallet_from_dialog(AddWalletFromXprvDialog())
 
     def menu_action_wallet_name(self, name):
         if name not in self.wallets:
