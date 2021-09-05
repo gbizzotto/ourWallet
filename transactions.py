@@ -237,6 +237,16 @@ class Transaction:
         t.locktime = stream.read_int(4)
         return t
 
+    #@staticmethod from_dict(d):
+    #    t = Transaction()
+    #    t.__dict__ = d
+    #    t.inputs  = [TxInput .from_dict(i) for i in t. inputs]
+    #    t.outputs = [TxOutput.from_dict(o) for o in t.outputs]
+    #    metadata = Transaction.Metadata()
+    #    metadata.__dict__ = t.metadata
+    #    t.metadata = metadata
+    #    return t
+
     def strip_for_signature(self, vin, sighash):
         SIGHASH_ALL    = 1
         SIGHASH_NONE   = 2

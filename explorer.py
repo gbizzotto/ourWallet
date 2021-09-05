@@ -2,13 +2,62 @@ import sys
 import requests
 import json
 import time
+import os.path
 
 import transactions
+import util
 
+
+def get_transaction_metadata(txid, testnet):
+    if get_transaction_metadata.cache is None:
+        get_transaction_metadata.cache = {}
+        # load cache from file
+        if os.path.isfile("txsmd.cache"):
+            with open("txsmd.cache", "r") as f:
+                get_transaction_metadata.cache = json.loads(f.read())
+
+    if txid in get_transaction_metadata.cache:
+        md = transactions.Transaction.Metadata()
+        md.__dict__ = get_transaction_metadata.cache[txid]
+        md.txid = txid
+        return md
+
+    print("explorer get_transaction_metadata", txid, testnet)
+
+    #blockstream
+    network = "testnet/" if testnet else ""
+    page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid)
+    contents = json.loads(page.text)
+    metadata            = transactions.Transaction.Metadata()
+    metadata.txid       = txid
+    metadata.height     = contents["status"]["block_height"]
+    metadata.block_hash = contents["status"]["block_hash"]
+
+    get_transaction_metadata.cache[txid] = metadata.__dict__
+    del get_transaction_metadata.cache[txid]["txid"]
+
+    # write cache to file
+    with open("txsmd.cache", "w") as f:
+        f.write(json.dumps(get_transaction_metadata.cache))
+
+    return metadata
+get_transaction_metadata.cache = None
 
 def get_transaction(txid, testnet):
-    #if txid in transactions:
-    #    return transactions[txid]
+    if get_transaction.cache is None:
+        get_transaction.cache = {}
+        get_transaction.bincache = {}
+        # load cache from file
+        if os.path.isfile("txs.cache"):
+            with open("txs.cache", "r") as f:
+                get_transaction.cache = json.loads(f.read())
+                for k,v in get_transaction.cache.items():
+                    get_transaction.bincache[k] = v
+                    get_transaction.cache[k] = transactions.Transaction.from_hex(v)
+                    get_transaction.cache[k].metadata = get_transaction_metadata(txid, testnet)
+
+    if txid in get_transaction.cache:
+        return get_transaction.cache[txid]
 
     print("explorer get_transaction", txid)
 
@@ -16,15 +65,20 @@ def get_transaction(txid, testnet):
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid+"/hex")
     t = transactions.Transaction.from_hex(page.text)
-    #transactions[txid] = t
 
-    page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid)
-    contents = json.loads(page.text)
-    t.metadata            = transactions.Transaction.Metadata()
-    t.metadata.txid       = txid
-    t.metadata.height     = contents["status"]["block_height"]
-    t.metadata.block_hash = contents["status"]["block_hash"]
+    get_transaction.bincache[txid] = page.text
+
+    t.metadata = get_transaction_metadata(txid, testnet)
+
+    get_transaction.cache[txid] = t
+
+    # write cache to file
+    with open("txs.cache", "w") as f:
+        f.write(json.dumps(get_transaction.bincache))
+
     return t
+get_transaction.cache    = None
+get_transaction.bincache = None
 
 
 def is_output_spent(txid, vout, testnet):

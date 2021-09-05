@@ -274,7 +274,6 @@ class MainWindow(QMainWindow):
         self.ui.menuWallets.insertMenu(self.ui.actionLoad_from_words, self.wallets_menu)
         self.ui.menuWallets.insertSeparator(self.ui.actionLoad_from_words)
         self.ui.selectUTXOsPushButton.pressed.connect(self.chooseutxos)
-        self.current_height = explorer.get_current_height(testnet)
 
         utxoTable = self.ui.UTXOsTableWidget
         utxo_columns_titles = ["Signed", "amount", "wallet", "confirmations", "derivation", "address"]
@@ -334,6 +333,7 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             utxoTable = self.ui.UTXOsTableWidget
             utxoTable.setRowCount(0)
+            current_height = explorer.get_current_height(testnet)
             for wallet_name,utxos in dialog.utxos.items():
                 for utxo in utxos:
                     row_idx = utxoTable.rowCount()
@@ -343,7 +343,7 @@ class MainWindow(QMainWindow):
                     utxoTable.setCellWidget(row_idx, 0, cb);
                     utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
                     utxoTable.setItem(row_idx, 2, QTableWidgetItem(wallet_name))
-                    utxoTable.setItem(row_idx, 3, QTableWidgetItem(str(self.current_height - utxo.parent_tx.metadata.height)))
+                    utxoTable.setItem(row_idx, 3, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
                     utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.metadata.derivation))
                     utxoTable.setItem(row_idx, 5, QTableWidgetItem(utxo.metadata.address))
 
