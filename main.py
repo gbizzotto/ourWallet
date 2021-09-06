@@ -114,14 +114,14 @@ class WalletInfoDialog(QDialog):
         utxos = []
         for derivation_pattern in derivation_patterns:
             if 'x' in derivation_pattern:
-                max = 2
+                max = 5
                 i = 0
                 while i < max:
                     derivation = derivation_pattern.replace("x", str(i))
                     address = self.wallet.address(derivation)
                     for utxo in explorer.get_utxos(self.wallet.name, address, derivation, testnet):
                         utxos.append(utxo)
-                        max = i+2
+                        max = i+5
                     i += 1
             else:
                 address = self.wallet.address(derivation_pattern)

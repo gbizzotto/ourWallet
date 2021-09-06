@@ -4,6 +4,7 @@ import json
 import time
 import os.path
 import binascii
+import copy
 
 import transactions
 import util
@@ -19,7 +20,7 @@ def get_transaction_metadata(txid, testnet):
 
     if txid.hex() in get_transaction_metadata.cache:
         md = transactions.Transaction.Metadata()
-        md.__dict__ = get_transaction_metadata.cache[txid.hex()]
+        md.__dict__ = copy.copy(get_transaction_metadata.cache[txid.hex()])
         md.txid = txid
         return md
 
@@ -30,12 +31,12 @@ def get_transaction_metadata(txid, testnet):
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid.hex())
     contents = json.loads(page.text)
     metadata            = transactions.Transaction.Metadata()
-    metadata.txid       = txid
     metadata.height     = contents["status"]["block_height"]
     metadata.block_hash = contents["status"]["block_hash"]
 
-    get_transaction_metadata.cache[txid.hex()] = metadata.__dict__
-    del get_transaction_metadata.cache[txid.hex()]["txid"]
+    get_transaction_metadata.cache[txid.hex()] = copy.copy(metadata.__dict__)
+
+    metadata.txid       = txid
 
     # write cache to file
     with open("txsmd.cache", "w") as f:
