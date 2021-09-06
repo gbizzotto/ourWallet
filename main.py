@@ -306,34 +306,24 @@ class MainWindow(QMainWindow):
                 tx_bin.append(transactions.SIGHASH_ALL)
                 tx_bin += b"\x00\x00\x00"
 
-                print("tx", tx_bin.hex())
-
                 wallet     = self.wallets[utxo.metadata.wallet_name]
                 derivation = utxo.metadata.derivation
                 private_key = wallet.privkey(derivation)
-                print("pv key", private_key.hex())
                 pubkey = wallet.pubkey(derivation)
-                print("pub key", pubkey.hex())
-
                 data = hashlib.sha256(tx_bin).digest()
-                print("data", data.hex())
                 vk = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
-                signature = vk.sign(data, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
-
-                signature = ourCrypto.normalize(signature)
-
+                while True:
+                    signature = vk.sign(data, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
+                    if ourCrypto.is_signature_standard(signature):
+                        break
                 sighash = bytes([transactions.SIGHASH_ALL])
-                print("sighash", sighash.hex())
                 signature = signature + sighash
-
-                print("signature", signature.hex())
 
                 self.transaction.inputs[row_idx].scriptsig = bytearray()
                 stream = scriptVM.ScriptByteStream(self.transaction.inputs[row_idx].scriptsig)
                 stream.add_chunk(signature)
                 stream.add_chunk(pubkey)
 
-                print("scriptsig", self.transaction.inputs[row_idx].scriptsig.hex())
                 print("serialized transaction", self.transaction.to_bin().hex())
 
     def output_changed(self, row, col):

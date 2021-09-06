@@ -14,3 +14,8 @@ def to_dict(obj):
         return {k:to_dict(v) for k,v in obj.__dict__.items()}
     else:
         return obj.__repr__()
+
+def int_to_bytes(i: int, *, signed: bool = False) -> bytes:
+    length = ((i + ((i * signed) < 0)).bit_length() + 7 + signed) // 8
+    return i.to_bytes(length, byteorder='big', signed=signed)
+

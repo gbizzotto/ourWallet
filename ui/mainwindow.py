@@ -364,7 +364,7 @@ class Ui_MainWindow(object):
     # setupUi
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"myTxBuilderOrSomething", None))
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"ourWallet", None))
         self.actionImport.setText(QCoreApplication.translate("MainWindow", u"Import...", None))
         self.actionLoad_from_words.setText(QCoreApplication.translate("MainWindow", u"Regenerate from words", None))
         self.actionLoad_from_xprv.setText(QCoreApplication.translate("MainWindow", u"Regenerate from xprv...", None))
