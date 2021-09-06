@@ -6,6 +6,42 @@ from copy import deepcopy
 
 import transactions
 
+P2PK   = 0
+P2PKH  = 1
+P2SH   = 2
+P2MS   = 3
+P2WPKH = 4
+P2WSH  = 5
+P2TR   = 6
+
+def identify_scriptpubkey(script):
+    parsed_script = ScriptByteStream(script).read_all()
+    if len(parsed_script) == 2 and parsed_script[1] == RunnerVM.OP_CHECKSIG:
+        return P2PK
+    elif len(parsed_script) == 5 \
+            and parsed_script[0] == RunnerVM.OP_DUP \
+            and parsed_script[1] == RunnerVM.OP_HASH160 \
+            and parsed_script[3] == RunnerVM.OP_EQUALVERIFY \
+            and parsed_script[4] == RunnerVM.OP_CHECKSIG:
+        return P2PKH
+    elif len(parsed_script) == 3 and parsed_script[0] == RunnerVM.OP_HASH160 and parsed_script[2] == RunnerVM.OP_EQUAL:
+        return P2SH
+    elif len(parsed_script) >= 4 and parsed_script[-1] == RunnerVM.OP_CHECKMULTISIG \
+            and RunnerVM.OP_1 <= parsed_script[-2] <= RunnerVM.OP_16 \
+            and RunnerVM.OP_1 <= parsed_script[ 0] <= RunnerVM.OP_16:
+        n = parsed_script[-2]
+        if len(parsed_script) == n+4:
+            return P2MS
+    elif len(parsed_script) == 2 and parsed_script[0] == RunnerVM.OP_0:
+        if len(parsed_script[1]) == 20:
+            return P2WPKH
+        elif  len(parsed_script[1]) == 32:
+            return P2WSH
+    elif len(parsed_script) == 2 and parsed_script[0] == RunnerVM.OP_1 and len(parsed_script[1]) == 32:
+        return P2TR
+    return None
+
+
 class ScriptByteStream:
     def __init__(self, bytes_buffer):
         self.buffer = bytes_buffer
@@ -16,6 +52,11 @@ class ScriptByteStream:
         return self.buffer[self.stream.tell()]
     def eof(self):
         return self.stream.tell() >= len(self.buffer)
+    def read_all(self):
+        result = []
+        while not self.eof():
+            result.append(self.next())
+        return result
     def read_chunk(self, size):
         return self.stream.read(size)
     def read_byte(self):
@@ -30,19 +71,40 @@ class ScriptByteStream:
         return result
     def next(self):
         op = self.read_byte()
-        if op >= 1 and op <= 75:
+        if op >= 1 and op < RunnerVM.OP_PUSHDATA1:
             return self.read_chunk(op)
-        elif op == 76:
+        elif op == RunnerVM.OP_PUSHDATA1:
             op = self.read_byte()
             return self.read_chunk(op)
-        elif op == 77:
+        elif op == RunnerVM.OP_PUSHDATA2:
             op = self.read_int(2)
             return self.read_chunk(op)
-        elif op == 78:
+        elif op == RunnerVM.OP_PUSHDATA4:
             op = self.read_int(4)
             return self.read_chunk(op)
         else:
             return op
+
+    def add_byte(self, v):
+        self.buffer.append(v)
+    def add_int(self, v, size):
+        for i in range(0,size):
+            self.add_byte(v&0xFF)
+            v >>= 8
+    def add_chunk(self, chunk):
+        if len(chunk) < RunnerVM.OP_PUSHDATA1:
+            self.add_byte(len(chunk))
+        elif len(chunk) <= 0xFF:
+            self.add_byte(RunnerVM.OP_PUSHDATA1)
+            self.add_byte(len(chunk))
+        elif len(chunk) <= 0xFFFF:
+            self.add_byte(RunnerVM.OP_PUSHDATA2)
+            self.add_int(len(chunk), 2)
+        else:
+            self.add_byte(RunnerVM.OP_PUSHDATA4)
+            self.add_int(len(chunk), 4)
+        self.buffer.extend(chunk)
+
 
     #def read_varint(self):
     #    c = self.read_int(1)
@@ -73,9 +135,9 @@ class RunnerVM:
             if isinstance(op, bytes):
                 stack.append(op)
             elif op == cls.OP_FALSE:
-                stack.append(False)
+                stack.append(0)
             elif op == cls.OP_TRUE:
-                stack.append(True)
+                stack.append(1)
             elif op >= 82 and op <= 92:
                 stack.append(op-80)
             elif op == 80:
@@ -111,17 +173,17 @@ class RunnerVM:
                 vk = ecdsa.VerifyingKey.from_string(pubkey, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
                 try:
                     if vk.verify(signature, data, hashlib.sha256, sigdecode=ecdsa.util.sigdecode_der):
-                        stack.append(True)
+                        stack.append(1)
                     else:
-                        stack.append(False)
+                        stack.append(0)
                 except:
 
-                    stack.append(False)
+                    stack.append(0)
             else:
                 raise NotImplementedError(PrinterVM.to_string(op))
         if debug:
             cls.print_stack(stack)
-        if len(stack) == 0 or stack[-1] == 0 or stack[-1] == False:
+        if len(stack) == 0 or stack[-1] == 0:
             return False
         return True
 
@@ -137,14 +199,17 @@ class RunnerVM:
             i += 1
 
     OP_FALSE = 0
-    # OP_PUSHDATA0
+    OP_0 = 0
+    # OP_PUSHDATA0 from 1 to 75
     OP_PUSHDATA1 = 76
     OP_PUSHDATA2 = 77
     OP_PUSHDATA4 = 78
     OP_1NEGATE = 79
     OP_RESERVED = 80
     OP_TRUE = 81
+    OP_1 = 81
     # OP_N
+    OP_16 = 96
     OP_NOP = 97
     OP_VER = 98
     OP_IF  = 99
@@ -426,7 +491,7 @@ if __name__ == "__main__":
     print("txid:", txid.hex())
 
     import explorer
-    prev_tx = explorer.get_transaction(tx.inputs[0].txid.hex(), False)
+    prev_tx = explorer.get_transaction(tx.inputs[0].txid, False)
     tx.inputs[0].txoutput = prev_tx.outputs[tx.inputs[0].vout]
     print("-------")
     #print(tx.inputs[0].scriptsig.hex(), tx.inputs[0].txoutput.scriptpubkey.hex())

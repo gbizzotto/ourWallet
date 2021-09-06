@@ -6,6 +6,11 @@ import util
 
 from copy import deepcopy
 
+SIGHASH_ALL    = 1
+SIGHASH_NONE   = 2
+SIGHASH_SINGLE = 3
+SIGHASH_ANYONECANPAY = 0x80
+
 class TxByteStream:
     def __init__(self, bytearray):
         self.buffer = bytearray
@@ -71,7 +76,8 @@ class TxInput:
 
     def to_dict(self):
         d = deepcopy(self.__dict__)
-        del d["parent_tx"]
+        if "parent_tx" in d:
+            del d["parent_tx"]
         return util.to_dict(d)
 
     def to_bin(self):
@@ -98,9 +104,9 @@ class TxInput:
     @classmethod
     def from_dict(cls, d):
         txin = cls()
-        txin.txid       = d["txid"]
+        txin.txid       = binascii.unhexlify(d["txid"])
         txin.vout       = d["vout"]
-        txin.scriptsig  = d["scriptsig"]
+        txin.scriptsig  = binascii.unhexlify(d["scriptsig"])
         txin.sequence   = d["sequence"]
         txin.parent_tx  = None
         txin.txoutput   = Metadata.from_dict(d["txoutput"])
@@ -115,6 +121,7 @@ class TxOutput:
     # self.metadata
 
     class Metadata:
+        # self.wallet_name
         # self.address
         # self.derivation
         # self.spent
@@ -126,11 +133,13 @@ class TxOutput:
         def from_dict(cls, d):
             c = cls()
             c.__dict__ = d
+            c.txid = binascii.unhexlify(c.txid)
             return c
 
     def to_dict(self):
         d = deepcopy(self.__dict__)
-        del d["parent_tx"]
+        if "parent_tx" in d:
+            del d["parent_tx"]
         return util.to_dict(d)
 
     def to_bin(self):
@@ -154,7 +163,7 @@ class TxOutput:
     def from_dict(cls, d):
         txout = cls()
         txout.amount       = d["amount"]
-        txout.scriptpubkey = d["scriptpubkey"]
+        txout.scriptpubkey = binascii.unhexlify(d["scriptpubkey"])
         txout.parent_tx    = None
         txout.metadata     = TxOutput.Metadata.from_dict(d["metadata"])
         return txout
@@ -248,11 +257,6 @@ class Transaction:
     #    return t
 
     def strip_for_signature(self, vin, sighash):
-        SIGHASH_ALL    = 1
-        SIGHASH_NONE   = 2
-        SIGHASH_SINGLE = 3
-        SIGHASH_ANYONECANPAY = 0x80
-
         if self.inputs[vin].txoutput is None:
             raise
         else:

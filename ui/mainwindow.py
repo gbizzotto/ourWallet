@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1003, 885)
+        MainWindow.resize(1050, 885)
         self.actionImport = QAction(MainWindow)
         self.actionImport.setObjectName(u"actionImport")
         self.actionLoad_from_words = QAction(MainWindow)
@@ -42,6 +42,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.UTXOsGroupBox = QGroupBox(self.centralwidget)
         self.UTXOsGroupBox.setObjectName(u"UTXOsGroupBox")
+        self.UTXOsGroupBox.setAlignment(Qt.AlignCenter)
         self.verticalLayout_4 = QVBoxLayout(self.UTXOsGroupBox)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.selectUTXOsPushButton = QPushButton(self.UTXOsGroupBox)
@@ -51,9 +52,18 @@ class Ui_MainWindow(object):
 
         self.UTXOsTableWidget = QTableWidget(self.UTXOsGroupBox)
         self.UTXOsTableWidget.setObjectName(u"UTXOsTableWidget")
+        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.UTXOsTableWidget.sizePolicy().hasHeightForWidth())
+        self.UTXOsTableWidget.setSizePolicy(sizePolicy)
+        self.UTXOsTableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
         self.UTXOsTableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.UTXOsTableWidget.setAlternatingRowColors(True)
         self.UTXOsTableWidget.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.UTXOsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.UTXOsTableWidget.horizontalHeader().setStretchLastSection(True)
+        self.UTXOsTableWidget.verticalHeader().setVisible(False)
 
         self.verticalLayout_4.addWidget(self.UTXOsTableWidget)
 
@@ -62,6 +72,7 @@ class Ui_MainWindow(object):
 
         self.outputsGroupBox = QGroupBox(self.centralwidget)
         self.outputsGroupBox.setObjectName(u"outputsGroupBox")
+        self.outputsGroupBox.setAlignment(Qt.AlignCenter)
         self.outputsGroupBox.setFlat(False)
         self.outputsGroupBox.setCheckable(False)
         self.verticalLayout_5 = QVBoxLayout(self.outputsGroupBox)
@@ -81,11 +92,16 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_5.addLayout(self.horizontalLayout_4)
 
-        self.outputsListWidget = QListWidget(self.outputsGroupBox)
-        self.outputsListWidget.setObjectName(u"outputsListWidget")
-        self.outputsListWidget.setAlternatingRowColors(True)
+        self.outputsTableWidget = QTableWidget(self.outputsGroupBox)
+        self.outputsTableWidget.setObjectName(u"outputsTableWidget")
+        sizePolicy.setHeightForWidth(self.outputsTableWidget.sizePolicy().hasHeightForWidth())
+        self.outputsTableWidget.setSizePolicy(sizePolicy)
+        self.outputsTableWidget.setAlternatingRowColors(True)
+        self.outputsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.outputsTableWidget.horizontalHeader().setStretchLastSection(True)
+        self.outputsTableWidget.verticalHeader().setVisible(False)
 
-        self.verticalLayout_5.addWidget(self.outputsListWidget)
+        self.verticalLayout_5.addWidget(self.outputsTableWidget)
 
 
         self.horizontalLayout_2.addWidget(self.outputsGroupBox)
@@ -93,25 +109,157 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
 
+        self.horizontalLayout_9 = QHBoxLayout()
+        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
+        self.widget_4 = QWidget(self.centralwidget)
+        self.widget_4.setObjectName(u"widget_4")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.widget_4.sizePolicy().hasHeightForWidth())
+        self.widget_4.setSizePolicy(sizePolicy1)
+
+        self.horizontalLayout_9.addWidget(self.widget_4)
+
+        self.label_5 = QLabel(self.centralwidget)
+        self.label_5.setObjectName(u"label_5")
+
+        self.horizontalLayout_9.addWidget(self.label_5)
+
+        self.lineEdit_5 = QLineEdit(self.centralwidget)
+        self.lineEdit_5.setObjectName(u"lineEdit_5")
+        self.lineEdit_5.setReadOnly(True)
+
+        self.horizontalLayout_9.addWidget(self.lineEdit_5)
+
+        self.widget_3 = QWidget(self.centralwidget)
+        self.widget_3.setObjectName(u"widget_3")
+        sizePolicy1.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
+        self.widget_3.setSizePolicy(sizePolicy1)
+
+        self.horizontalLayout_9.addWidget(self.widget_3)
+
+
+        self.verticalLayout_3.addLayout(self.horizontalLayout_9)
+
+        self.horizontalLayout_10 = QHBoxLayout()
+        self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
+        self.widget_5 = QWidget(self.centralwidget)
+        self.widget_5.setObjectName(u"widget_5")
+        sizePolicy1.setHeightForWidth(self.widget_5.sizePolicy().hasHeightForWidth())
+        self.widget_5.setSizePolicy(sizePolicy1)
+
+        self.horizontalLayout_10.addWidget(self.widget_5)
+
+        self.label_6 = QLabel(self.centralwidget)
+        self.label_6.setObjectName(u"label_6")
+
+        self.horizontalLayout_10.addWidget(self.label_6)
+
+        self.lineEdit_6 = QLineEdit(self.centralwidget)
+        self.lineEdit_6.setObjectName(u"lineEdit_6")
+        self.lineEdit_6.setReadOnly(True)
+
+        self.horizontalLayout_10.addWidget(self.lineEdit_6)
+
+        self.widget_6 = QWidget(self.centralwidget)
+        self.widget_6.setObjectName(u"widget_6")
+        sizePolicy1.setHeightForWidth(self.widget_6.sizePolicy().hasHeightForWidth())
+        self.widget_6.setSizePolicy(sizePolicy1)
+
+        self.horizontalLayout_10.addWidget(self.widget_6)
+
+
+        self.verticalLayout_3.addLayout(self.horizontalLayout_10)
+
+        self.horizontalLayout_5 = QHBoxLayout()
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.horizontalLayout_8 = QHBoxLayout()
+        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
+        self.label = QLabel(self.centralwidget)
+        self.label.setObjectName(u"label")
+
+        self.horizontalLayout_8.addWidget(self.label)
+
+        self.inputSumEdit = QLineEdit(self.centralwidget)
+        self.inputSumEdit.setObjectName(u"inputSumEdit")
+        self.inputSumEdit.setReadOnly(True)
+
+        self.horizontalLayout_8.addWidget(self.inputSumEdit)
+
+
+        self.horizontalLayout_5.addLayout(self.horizontalLayout_8)
+
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.horizontalLayout_7 = QHBoxLayout()
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.label_3 = QLabel(self.centralwidget)
+        self.label_3.setObjectName(u"label_3")
+
+        self.horizontalLayout_7.addWidget(self.label_3)
+
+        self.outputSumEdit = QLineEdit(self.centralwidget)
+        self.outputSumEdit.setObjectName(u"outputSumEdit")
+        self.outputSumEdit.setReadOnly(True)
+
+        self.horizontalLayout_7.addWidget(self.outputSumEdit)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_7)
+
+        self.horizontalLayout_6 = QHBoxLayout()
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.label_2 = QLabel(self.centralwidget)
+        self.label_2.setObjectName(u"label_2")
+
+        self.horizontalLayout_6.addWidget(self.label_2)
+
+        self.feeEdit = QLineEdit(self.centralwidget)
+        self.feeEdit.setObjectName(u"feeEdit")
+        self.feeEdit.setReadOnly(True)
+
+        self.horizontalLayout_6.addWidget(self.feeEdit)
+
+        self.label_4 = QLabel(self.centralwidget)
+        self.label_4.setObjectName(u"label_4")
+
+        self.horizontalLayout_6.addWidget(self.label_4)
+
+        self.lineEdit_4 = QLineEdit(self.centralwidget)
+        self.lineEdit_4.setObjectName(u"lineEdit_4")
+        self.lineEdit_4.setReadOnly(True)
+
+        self.horizontalLayout_6.addWidget(self.lineEdit_4)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_6)
+
+
+        self.horizontalLayout_5.addLayout(self.verticalLayout)
+
+
+        self.verticalLayout_3.addLayout(self.horizontalLayout_5)
+
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName(u"gridLayout")
         self.widget_2 = QWidget(self.centralwidget)
         self.widget_2.setObjectName(u"widget_2")
-        sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
-        self.widget_2.setSizePolicy(sizePolicy)
+        sizePolicy2 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
+        self.widget_2.setSizePolicy(sizePolicy2)
 
         self.gridLayout.addWidget(self.widget_2, 0, 4, 1, 1)
 
         self.dateTimeEdit = QDateTimeEdit(self.centralwidget)
         self.dateTimeEdit.setObjectName(u"dateTimeEdit")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
-        self.dateTimeEdit.setSizePolicy(sizePolicy1)
+        sizePolicy3 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
+        self.dateTimeEdit.setSizePolicy(sizePolicy3)
         self.dateTimeEdit.setMinimumSize(QSize(200, 0))
         self.dateTimeEdit.setDateTime(QDateTime(QDate(2033, 5, 18), QTime(3, 40, 0)))
         self.dateTimeEdit.setCalendarPopup(True)
@@ -126,11 +274,11 @@ class Ui_MainWindow(object):
 
         self.locktimeLineEdit = QLineEdit(self.centralwidget)
         self.locktimeLineEdit.setObjectName(u"locktimeLineEdit")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.locktimeLineEdit.sizePolicy().hasHeightForWidth())
-        self.locktimeLineEdit.setSizePolicy(sizePolicy2)
+        sizePolicy4 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.locktimeLineEdit.sizePolicy().hasHeightForWidth())
+        self.locktimeLineEdit.setSizePolicy(sizePolicy4)
 
         self.gridLayout.addWidget(self.locktimeLineEdit, 0, 2, 1, 1)
 
@@ -148,18 +296,12 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.PreventFeeSnipingRadioButton)
 
-        self.RBFCheckBox = QCheckBox(self.centralwidget)
-        self.RBFCheckBox.setObjectName(u"RBFCheckBox")
-        self.RBFCheckBox.setChecked(False)
-
-        self.verticalLayout_3.addWidget(self.RBFCheckBox)
-
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.widget = QWidget(self.centralwidget)
         self.widget.setObjectName(u"widget")
-        sizePolicy.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
-        self.widget.setSizePolicy(sizePolicy)
+        sizePolicy2.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy2)
 
         self.horizontalLayout_3.addWidget(self.widget)
 
@@ -192,7 +334,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1003, 21))
+        self.menubar.setGeometry(QRect(0, 0, 1050, 21))
         self.menuTX = QMenu(self.menubar)
         self.menuTX.setObjectName(u"menuTX")
         self.menuWallets = QMenu(self.menubar)
@@ -235,11 +377,22 @@ class Ui_MainWindow(object):
         self.outputsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"Outputs", None))
         self.addOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
         self.removeOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
+        self.label_5.setText(QCoreApplication.translate("MainWindow", u"Transaction size ~", None))
+        self.lineEdit_5.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.label_6.setText(QCoreApplication.translate("MainWindow", u"Virtual size ~", None))
+        self.lineEdit_6.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Inputs total amount", None))
+        self.inputSumEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"Outputs total amount", None))
+        self.outputSumEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"Fee", None))
+        self.feeEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.label_4.setText(QCoreApplication.translate("MainWindow", u"sat/B ~", None))
+        self.lineEdit_4.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.dateTimeEdit.setDisplayFormat(QCoreApplication.translate("MainWindow", u"yyyy-MM-dd HH:mm zzz", None))
         self.locktimeLineEdit.setText(QCoreApplication.translate("MainWindow", u"2000000000", None))
         self.nLockTimeRadioButton.setText(QCoreApplication.translate("MainWindow", u"nLockTime", None))
         self.PreventFeeSnipingRadioButton.setText(QCoreApplication.translate("MainWindow", u"Prevent fee sniping", None))
-        self.RBFCheckBox.setText(QCoreApplication.translate("MainWindow", u"Make final", None))
         self.signAllPUshButton.setText(QCoreApplication.translate("MainWindow", u"Sign all mine", None))
         self.verifyPushButton.setText(QCoreApplication.translate("MainWindow", u"Verify", None))
         self.exportPushButton.setText(QCoreApplication.translate("MainWindow", u"Export", None))

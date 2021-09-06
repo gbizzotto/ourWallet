@@ -45,8 +45,8 @@ Z_TEST_PUBLIC  = codecs.decode('045f1cf6', 'hex') # vpub
 # Address prefixes
 PREFIX_MAINNET_PKH = codecs.decode('00', 'hex')
 PREFIX_TESTNET_PKH = codecs.decode('6F', 'hex')
-PREFIX_MAINNET_P2SH = codecs.decode('05', 'hex')
-PREFIX_TESTNET_P2SH = codecs.decode('C4', 'hex')
+PREFIX_MAINNET_SH  = codecs.decode('05', 'hex')
+PREFIX_TESTNET_SH  = codecs.decode('C4', 'hex')
 #PREFIX_MAINNET_BECH = codecs.decode('0303000203', 'hex')
 #PREFIX_TESTNET_BECH = codecs.decode('0303001402', 'hex')
 
@@ -349,7 +349,7 @@ class BIP32Key(object):
         elif self.bip == 49:
             keyhash = hashlib.new('ripemd160', sha256(self.PublicKey()).digest()).digest()
             scriptSig = bytes([0x00,len(keyhash)]) + keyhash
-            addressversion = PREFIX_MAINNET_P2SH if not self.testnet else PREFIX_TESTNET_P2SH
+            addressversion = PREFIX_MAINNET_SH if not self.testnet else PREFIX_TESTNET_SH
             addressBytes = hashlib.new('ripemd160', sha256(scriptSig).digest()).digest()
             vh160 = addressversion + addressBytes
         else:

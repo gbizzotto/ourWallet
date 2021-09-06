@@ -2,7 +2,7 @@
 def to_dict(obj):
     if isinstance(obj, (int,bool,str)) or obj is None:
         return obj
-    elif isinstance(obj, bytes):
+    elif isinstance(obj, (bytes,bytearray)):
         return obj.hex()
     elif isinstance(obj, dict):
         return {k:to_dict(v) for k,v in obj.items()}

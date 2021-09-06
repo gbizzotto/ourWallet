@@ -4,6 +4,7 @@ import bip32utils
 import transactions
 from copy import deepcopy
 import json
+import binascii
 
 import util
 
@@ -28,27 +29,27 @@ class Wallet:
 
 # abstract class
 class HDWallet(Wallet):
-    def __init__(self, name):
+    def __init__(self, name, root_key):
         super(HDWallet, self).__init__(name)
+        self.root_key = root_key
     def to_dict(self):
         d = super(HDWallet, self).to_dict()
         del d["root_key"]
         return d
     def address(self, derivation, bip=None):
-        k = HDWallet.Derive(self.root_key, derivation, bip)
-        return k.Address()
+        return self.derive(derivation, bip).Address()
+    def pubkey(self, derivation, bip=None):
+        return self.derive(derivation, bip).PublicKey()
+    def privkey_wif(self, derivation, bip=None):
+        return self.derive(derivation, bip).WalletImportFormat()
     def privkey(self, derivation, bip=None):
-        k = HDWallet.Derive(self.root_key, derivation, bip)
-        return k.WalletImportFormat()
+        return self.derive(derivation, bip).PrivateKey()
     def xprv(self, derivation, bip=None):
-        k = HDWallet.Derive(self.root_key, derivation, bip)
-        return k.ExtendedKey(private=True)
+        return self.derive(derivation, bip).ExtendedKey(private=True)
     def xpub(self, derivation, bip=None):
-        k = HDWallet.Derive(self.root_key, derivation, bip)
-        return k.ExtendedKey(private=False)
-    @staticmethod
-    def Derive(root_key, derivation, bip=None):
-        k = root_key
+        return self.derive(derivation, bip).ExtendedKey(private=False)
+    def derive(self, derivation, bip=None):
+        k = self.root_key
         for d in derivation.split('/'):
             if d == 'm':
                 continue
@@ -62,21 +63,21 @@ class HDWallet(Wallet):
 
 class WordsWallet(HDWallet):
     def __init__(self, name, phrase, passwd, testnet):
-        super(WordsWallet, self).__init__(name)
+        seed = bip39.phrase_to_seed(" ".join(str(self.phrase).split()), self.passwd)
+        root_key = bip32utils.BIP32Key.fromEntropy(seed, testnet=self.testnet)
+        super(WordsWallet, self).__init__(name, root_key)
         self.phrase  = phrase
         self.passwd  = passwd
         self.testnet = testnet
-        seed = bip39.phrase_to_seed(" ".join(str(self.phrase).split()), self.passwd)
-        self.root_key = bip32utils.BIP32Key.fromEntropy(seed, testnet=self.testnet)
     @classmethod
     def from_dict(cls, d):
         return cls(d["name"], d["phrase"], d["passwd"], d["testnet"])
 
 class ExtendedKeyWallet(HDWallet):
     def __init__(self, name, extendedkey):
-        super(ExtendedKeyWallet, self).__init__(name)
         self.extendedkey = extendedkey
-        self.root_key = bip32utils.BIP32Key.fromExtendedKey(self.extendedkey)
+        root_key = bip32utils.BIP32Key.fromExtendedKey(self.extendedkey)
+        super(ExtendedKeyWallet, self).__init__(name, root_key)
     @classmethod
     def from_dict(cls, d):
         return cls(d["name"], d["extendedkey"])
