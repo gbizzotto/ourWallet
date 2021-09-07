@@ -20,10 +20,12 @@ class Wallet:
         self.name = name
         self.utxos = []
         self.filename = filename
+        self.dirty = False
     def to_dict(self):
         d = deepcopy(self)
         # returns the class name of the correct subclass
         del d.__dict__["filename"]
+        del d.__dict__["dirty"]
         d.wallet_type = type(self).__name__
         return util.to_dict(d.__dict__)
 

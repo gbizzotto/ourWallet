@@ -9,8 +9,9 @@ import json
 from copy import deepcopy
 import hashlib
 import ecdsa
+import bech32
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox
 from PySide6.QtCore import QFile, QIODevice, Qt, QSize
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QPixmap, QPalette
@@ -67,7 +68,7 @@ class WalletInfoDialog(QDialog):
         self.ui.utxoTable.setColumnCount(len(utxo_columns_titles))
         self.ui.utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
         self.ui.utxoRefreshButton.clicked.connect(self.refresh_utxos)
-        self.ui.saveButton.clicked.connect(self.save)
+        self.ui.       saveButton.clicked.connect(self.save)
 
         balance = add_utxos_to_table(wallet.utxos, self.ui.utxoTable)
         self.ui.balanceEdit.setText(str(balance))
@@ -108,7 +109,6 @@ class WalletInfoDialog(QDialog):
         set_qr_label(self.ui.qrcodeLabel, self.ui.valueEdit.toPlainText())
 
     def refresh_utxos(self):
-        self.ui.utxoTable.setRowCount(0)
         derivation_patterns = [x.strip() for x in self.ui.utxoDerivationCombo.currentData().split(',')]
         balance = 0
         utxos = []
@@ -127,9 +127,15 @@ class WalletInfoDialog(QDialog):
                 address = self.wallet.address(derivation_pattern)
                 for utxo in explorer.get_utxos(self.wallet.name, address, derivation_pattern, testnet):
                     utxos.append(utxo)
-        balance = add_utxos_to_table(utxos, self.ui.utxoTable)
-        self.wallet.utxos = utxos
-        self.ui.balanceEdit.setText(str(balance))
+
+        old_utxos = set([utxo.metadata.txid.hex()+str(utxo.metadata.vout) for utxo in self.wallet.utxos])
+        new_utxos = set([utxo.metadata.txid.hex()+str(utxo.metadata.vout) for utxo in             utxos])
+        if new_utxos != old_utxos:
+            self.wallet.utxos = utxos
+            self.wallet.dirty = True
+            self.ui.utxoTable.setRowCount(0)
+            balance = add_utxos_to_table(utxos, self.ui.utxoTable)
+            self.ui.balanceEdit.setText(str(balance))
 
     def save(self):
         filename = self.wallet.filename
@@ -142,6 +148,7 @@ class WalletInfoDialog(QDialog):
         file = open(filename, 'wb')
         file.write(bin)
         self.wallet.filename = filename
+        self.wallet.dirty    = False
 
 def add_utxos_to_table(utxos, utxoTable):
     balance = 0
@@ -273,7 +280,7 @@ class MainWindow(QMainWindow):
         self.ui.      verifyPushButton.clicked.connect(self.verify       )
 
         utxoTable = self.ui.UTXOsTableWidget
-        utxo_columns_titles = ["Signed", "Final", "amount", "wallet", "confirmations", "derivation", "address"]
+        utxo_columns_titles = ["Signed", "sequence", "amount", "wallet", "confirmations", "derivation", "address"]
         utxoTable.setColumnCount(len(utxo_columns_titles))
         utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
 
@@ -285,6 +292,20 @@ class MainWindow(QMainWindow):
 
         self.wallets = {}
         self.transaction = transactions.Transaction()
+
+    def closeEvent(self,event):
+        msg = []
+        for w in self.wallets.values():
+            if w.dirty or w.filename is None:
+                msg.append(w.name + " needs Jesus, exit without saving it?")
+
+        if len(msg) == 0:
+            event.accept()
+            return
+        if QMessageBox.Yes == QMessageBox.question(self, "Confirm Exit...", '\n'.join(msg), QMessageBox.Yes| QMessageBox.No):
+            event.accept()
+        else:
+            event.ignore()
 
     def verify(self):
         inputsTable = self.ui.UTXOsTableWidget
@@ -324,7 +345,9 @@ class MainWindow(QMainWindow):
                 stream.add_chunk(signature)
                 stream.add_chunk(pubkey)
 
-                print("serialized transaction", self.transaction.to_bin().hex())
+                inputsTable.setItem(row_idx, 0, QTableWidgetItem("Yes"))
+
+        print("serialized transaction", self.transaction.to_bin().hex())
 
     def output_changed(self, row, col):
         outputsTable = self.ui.outputsTableWidget
@@ -344,31 +367,35 @@ class MainWindow(QMainWindow):
             self.update_fee()
         elif col == 1:
             # change address
-            b58_address = outputsTable.item(row, col).text()
+            address = outputsTable.item(row, col).text()
             try:
-                if not testnet:
-                    if b58_address[0] == '1':
+                if len(address) == 0:
+                    scheme = ""
+                elif not testnet:
+                    if address[0] == '1':
                         scheme = "P2PKH"
-                        hex_address = Base58.check_decode(b58_address)[1:]
-                        self.transaction.outputs[row].scriptpubkey = binascii.unhexlify('76a914') + hex_address + binascii.unhexlify('88ac')
-                    elif b58_address[0] == '3':
+                        bin_address = Base58.check_decode(address)[1:]
+                        self.transaction.outputs[row].scriptpubkey = binascii.unhexlify('76a914') + bin_address + binascii.unhexlify('88ac')
+                    elif address[0] == '3':
                         scheme = "P2SH"
-                    elif b58_address[0:4] == "bc1q":
+                    elif address[0:4] == "bc1q":
                         scheme = "Bech32"
-                    elif b58_address[0:4] == "bc1p":
+                    elif address[0:4] == "bc1p":
                         scheme = "P2TR"
                     else:
                         scheme = "ERROR"
                 else:
-                    if b58_address[0] == "m" or b58_address[0] == "n":
+                    if address[0] == "m" or address[0] == "n":
                         scheme = "P2PKH testnet"
-                        hex_address = Base58.check_decode(b58_address)[1:]
-                        self.transaction.outputs[row].scriptpubkey = binascii.unhexlify('76a914') + hex_address + binascii.unhexlify('88ac')
-                    elif b58_address[0] == '2':
+                        bin_address = Base58.check_decode(address)[1:]
+                        self.transaction.outputs[row].scriptpubkey = binascii.unhexlify('76a914') + bin_address + binascii.unhexlify('88ac')
+                    elif address[0] == '2':
                         scheme = "P2SH testnet"
-                    elif b58_address[0:4] == "tb1q":
+                    elif address[0:4] == "tb1q":
                         scheme = "Bech32 testnet"
-                    elif b58_address[0:4] == "tb1p":
+                        bin_address = bech32.decode('tb', address)[1]
+                        self.transaction.outputs[row].scriptpubkey = b'\x00\x14' + bytes(bin_address)
+                    elif address[0:4] == "tb1p":
                         scheme = "P2TR testnet"
                     else:
                         scheme = "ERROR"
@@ -378,8 +405,6 @@ class MainWindow(QMainWindow):
             outputsTable.setItem(row, 2, QTableWidgetItem(scheme))
         else:
             pass
-
-        print(self.transaction)
 
     def add_output(self):
         outputTable = self.ui.outputsTableWidget
@@ -394,8 +419,7 @@ class MainWindow(QMainWindow):
         for idx in selected_indexes[::-1]:
             outputsTable.removeRow(idx)
             del self.transaction.outputs[idx]
-        if len(selected_indexes) > 0:
-            self.update_fee()
+        self.update_fee()
 
     def chooseutxos(self):
         j = json.dumps(util.to_dict(self.wallets))
@@ -419,10 +443,7 @@ class MainWindow(QMainWindow):
                 sum += utxo.amount
                 row_idx = utxoTable.rowCount()
                 utxoTable.insertRow(row_idx)
-                cb = QCheckBox()
-                cb.setCheckable(False)
-                utxoTable.setCellWidget(row_idx, 0, cb);
-                utxoTable.setCellWidget(row_idx, 1, QCheckBox());
+                utxoTable.setItem(row_idx, 1, QTableWidgetItem("0"));
                 utxoTable.setItem(row_idx, 2, QTableWidgetItem(str(utxo.amount)))
                 utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.wallet_name))
                 utxoTable.setItem(row_idx, 4, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
@@ -431,8 +452,6 @@ class MainWindow(QMainWindow):
             utxoTable.resizeColumnsToContents()
             self.ui.inputSumEdit.setText(str(sum))
             self.update_fee()
-
-        print(self.transaction)
 
     def update_fee(self):
         input_total = int(self.ui.inputSumEdit.text())
@@ -463,14 +482,6 @@ class MainWindow(QMainWindow):
             dialog = WalletInfoDialog(self.wallets[w.name])
             if dialog.exec():
                 pass
-            filename = QFileDialog.getSaveFileName(self, 'Save wallet to file', filter="Wallet files(*.wlt);;All files(*)")[0]
-            if len(filename) == 0:
-                return
-            w.filename = filename
-            j = json.dumps(w.to_dict())
-            bin = ourCrypto.encrypt(j, b"ourPassword")
-            file = open(filename, 'wb')
-            file.write(bin)
 
     def add_wallet_from_words(self, event):
         self.add_wallet_from_dialog(AddWalletFromWordsDialog())
