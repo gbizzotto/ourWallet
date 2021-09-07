@@ -3,6 +3,7 @@ import io
 import binascii
 import json
 import util
+import hashlib
 
 from copy import deepcopy
 
@@ -44,8 +45,8 @@ class TxByteStream:
 
     def write(self, byte):
         self.buffer.append(byte)
-    def write_chunk(self, bytes):
-        self.buffer.extend(bytes)
+    def write_chunk(self, b):
+        self.buffer.extend(b)
     def write_int(self, size, value):
         while size > 0:
             self.buffer.append(value & 0xFF)
@@ -73,6 +74,12 @@ class TxInput:
     # ---------------
     # self.parent_tx
     # self.txoutput
+
+    def make_script_code(self):
+        scriptpubkey = self.txoutput.scriptpubkey
+        assert scriptpubkey[0] == 0
+        assert scriptpubkey[1] == 20
+        return bytearray([0x76,0xa9,0x14]) + scriptpubkey[2:] + bytearray([0x88, 0xac])
 
     def to_dict(self):
         d = deepcopy(self.__dict__)
@@ -205,8 +212,17 @@ class Transaction:
         stream.write_varint(len(self.outputs))
         for output in self.outputs:
             bin.extend(output.to_bin())
+
         if self.has_segwit:
-            raise NotImplementedError
+            segwit_bin = bytearray()
+            segwit_stream = TxByteStream(segwit_bin)
+            for entries in self.witnesses:
+                segwit_stream.write_varint(len(entries))
+                for entry in entries:
+                    segwit_stream.write_varint(len(entry))
+                    segwit_stream.write_chunk(entry)
+            stream.write_chunk(segwit_bin)
+
         stream.write_int(4, self.locktime)
         return bin
 
@@ -256,37 +272,115 @@ class Transaction:
     #    t.metadata = metadata
     #    return t
 
-    def strip_for_signature(self, vin, sighash):
-        if self.inputs[vin].txoutput is None:
+    def get_binary_for_segwit_signature(self, vin, hashtype):
+        empty_hash = bytearray([0]*32)
+
+        if (hashtype & 0x80) != SIGHASH_ANYONECANPAY:
+            prevouts = bytearray()
+            for input in self.inputs:
+                prevouts.extend(input.txid[::-1])
+                prevouts.extend(bytes([ input.vout     &0xFF]))
+                prevouts.extend(bytes([(input.vout>> 8)&0xFF]))
+                prevouts.extend(bytes([(input.vout>>16)&0xFF]))
+                prevouts.extend(bytes([(input.vout>>24)&0xFF]))
+            print("prevouts preimage", prevouts.hex())
+            hash_prevouts = hashlib.sha256(hashlib.sha256(prevouts).digest()).digest()
+        else:
+            hash_prevouts = empty_hash
+
+        if (hashtype & 0x80) != SIGHASH_ANYONECANPAY and (hashtype & 0x1f) != SIGHASH_SINGLE and (hashtype & 0x1f) != SIGHASH_NONE:
+            sequences = bytearray()
+            for input in self.inputs:
+                sequences.extend(bytes([ input.sequence     &0xFF]))
+                sequences.extend(bytes([(input.sequence>> 8)&0xFF]))
+                sequences.extend(bytes([(input.sequence>>16)&0xFF]))
+                sequences.extend(bytes([(input.sequence>>24)&0xFF]))
+            hash_sequences = hashlib.sha256(hashlib.sha256(sequences).digest()).digest()
+        else:
+            hash_sequences = empty_hash
+
+        if (hashtype & 0x1f) != SIGHASH_SINGLE and (hashtype & 0x1f) != SIGHASH_NONE:
+            outs = bytearray()
+            for out in self.outputs:
+                outs.extend(out.to_bin())
+            hash_outs = hashlib.sha256(hashlib.sha256(outs).digest()).digest()
+        elif (hashtype & 0x1f) == SIGHASH_SINGLE and vin < len(self.outputs):
+            outs = self.outputs[vin].to_bin()
+            hash_outs = hashlib.sha256(hashlib.sha256(outs).digest()).digest()
+        else:
+            hash_outs = empty_hash
+
+        preimage = bytearray()
+        stream = TxByteStream(preimage)
+        stream.write_int(4, self.version)
+        stream.write_chunk(hash_prevouts)
+        stream.write_chunk(hash_sequences)
+        stream.write_chunk(self.inputs[vin].txid[::-1])
+        stream.write_int(4, self.inputs[vin].vout) # outpoint
+        scriptcode = self.inputs[vin].make_script_code()
+        stream.write_varint(len(scriptcode))
+        stream.write_chunk(scriptcode)
+        stream.write_int(8, self.inputs[vin].txoutput.amount)
+        stream.write_int(4, self.inputs[vin].sequence)
+        stream.write_chunk(hash_outs)
+        stream.write_int(4, self.locktime)
+        stream.write_int(4, hashtype)
+        return preimage
+
+    def get_binary_for_legacy_signature(self, vin, sighash):
+        tx_copy = deepcopy(self)
+
+        if tx_copy.inputs[vin].txoutput is None:
             raise
         else:
-            subscript = self.inputs[vin].txoutput.scriptpubkey
+            subscript = tx_copy.inputs[vin].txoutput.scriptpubkey
 
-        for input in self.inputs:
+        for input in tx_copy.inputs:
             input.scriptsig = b'\x00'
-        self.inputs[vin].scriptsig = subscript
+        tx_copy.inputs[vin].scriptsig = subscript
 
         if sighash&3 == SIGHASH_ALL:
             pass
         elif sighash&3 == SIGHASH_NONE:
-            self.outputs = []
+            tx_copy.outputs = []
             for i in range(0,vin):
-                self.inputs[i].sequence = 0
-            for i in range(vin+1,len(self.inputs)):
-                self.inputs[i].sequence = 0
+                tx_copy.inputs[i].sequence = 0
+            for i in range(vin+1,len(tx_copy.inputs)):
+                tx_copy.inputs[i].sequence = 0
         elif sighash&3 == SIGHASH_SINGLE:
-            self.outputs = self.outputs[0:vin+1]
-            for output in self.outputs[0:-1]:
+            tx_copy.outputs = tx_copy.outputs[0:vin+1]
+            for output in tx_copy.outputs[0:-1]:
                 output.amount = -1
                 output.scriptpubkey = bytearray()
             for i in range(0,vin):
-                self.inputs[i].sequence = 0
-            for i in range(vin+1,len(self.inputs)):
-                self.inputs[i].sequence = 0
+                tx_copy.inputs[i].sequence = 0
+            for i in range(vin+1,len(tx_copy.inputs)):
+                tx_copy.inputs[i].sequence = 0
         if sighash&0x80 == SIGHASH_ANYONECANPAY:
-            self.inputs = [self.inputs[vin]]
+            tx_copy.inputs = [tx_copy.inputs[vin]]
+
+        tx_bin = tx_copy.to_bin()
+        tx_bin.append(sighash)
+        tx_bin += b"\x00\x00\x00"
+        return tx_bin
 
     def __repr__(self):
         return json.dumps(util.to_dict(self), indent=2)
 
 
+if __name__ == "__main__":
+    tx = Transaction.from_hex('0100000002fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f0000000000eeffffffef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100000000ffffffff02202cb206000000001976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac9093510d000000001976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac11000000')
+    import explorer
+    print(tx)
+    out0 = TxOutput()
+    out0.amount = 0x2540BE40
+    out0.scriptpubkey = binascii.unhexlify('2103c9f4836b9a4f77fc0d81f7bcb01b7f1b35916864b9476c241ce9fc198bd25432ac')
+    out1 = TxOutput()
+    out1.amount = 0x23C34600
+    out1.scriptpubkey = binascii.unhexlify('00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1')
+    tx.inputs[0].txoutput = out0
+    tx.inputs[1].txoutput = out1
+    print(tx)
+    hash_preimage = tx.get_binary_for_segwit_signature(1, SIGHASH_ALL)
+    print(hash_preimage.hex())
+    assert hash_preimage == binascii.unhexlify('0100000096b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd3752b0a642eea2fb7ae638c36f6252b6750293dbe574a806984b8e4d8548339a3bef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a010000001976a9141d0f172a0ecb48aee1be1f2687d2963ae33f71a188ac0046c32300000000ffffffff863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e51100000001000000')

@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
         self.wallets_menu = QMenu("Wallets info")
         self.ui.menuWallets.insertMenu(self.ui.actionLoad_from_words, self.wallets_menu)
         self.ui.menuWallets.insertSeparator(self.ui.actionLoad_from_words)
-        self.ui.selectUTXOsPushButton.pressed.connect(self.chooseutxos)
+        self.ui. selectUTXOsPushButton.clicked.connect(self.addutxos     )
         self.ui.   addOutputPushButton.clicked.connect(self.add_output   )
         self.ui.removeOutputPushButton.clicked.connect(self.del_output   )
         self.ui.     signAllPUshButton.clicked.connect(self.sign_all_mine)
@@ -321,17 +321,13 @@ class MainWindow(QMainWindow):
             utxo = self.transaction.inputs[row_idx].txoutput
             script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
             if script_type == scriptVM.P2PKH:
-                tx_copy = deepcopy(self.transaction)
-                tx_copy.strip_for_signature(row_idx, transactions.SIGHASH_ALL)
-                tx_bin = tx_copy.to_bin()
-                tx_bin.append(transactions.SIGHASH_ALL)
-                tx_bin += b"\x00\x00\x00"
+                data = self.transaction.get_binary_for_legacy_signature(row_idx, transactions.SIGHASH_ALL)
+                data = hashlib.sha256(data).digest()
 
                 wallet     = self.wallets[utxo.metadata.wallet_name]
-                derivation = utxo.metadata.derivation
+                derivation = utxo .metadata.derivation
                 private_key = wallet.privkey(derivation)
                 pubkey = wallet.pubkey(derivation)
-                data = hashlib.sha256(tx_bin).digest()
                 vk = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
                 while True:
                     signature = vk.sign(data, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
@@ -340,10 +336,34 @@ class MainWindow(QMainWindow):
                 sighash = bytes([transactions.SIGHASH_ALL])
                 signature = signature + sighash
 
-                self.transaction.inputs[row_idx].scriptsig = bytearray()
-                stream = scriptVM.ScriptByteStream(self.transaction.inputs[row_idx].scriptsig)
+                scriptsig = bytearray()
+                stream = scriptVM.ScriptByteStream(scriptsig)
                 stream.add_chunk(signature)
                 stream.add_chunk(pubkey)
+
+                self.transaction.inputs[row_idx].scriptsig = scriptsig
+                inputsTable.setItem(row_idx, 0, QTableWidgetItem("Yes"))
+
+            elif script_type == scriptVM.P2WPKH:
+                data = self.transaction.get_binary_for_segwit_signature(row_idx, transactions.SIGHASH_ALL)
+                data = hashlib.sha256(data).digest()
+
+                wallet     = self.wallets[utxo.metadata.wallet_name]
+                derivation = utxo.metadata.derivation
+                private_key = wallet.privkey(derivation)
+                pubkey = wallet.pubkey(derivation)
+                vk = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
+                while True:
+                    signature = vk.sign(data, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
+                    if ourCrypto.is_signature_standard(signature):
+                        break
+                sighash = bytes([transactions.SIGHASH_ALL])
+                signature = signature + sighash
+
+                witness = [signature, pubkey]
+
+                self.transaction.inputs[row_idx].scriptsig = bytearray() # empty
+                self.transaction.witnesses[row_idx] = witness
 
                 inputsTable.setItem(row_idx, 0, QTableWidgetItem("Yes"))
 
@@ -380,6 +400,8 @@ class MainWindow(QMainWindow):
                         scheme = "P2SH"
                     elif address[0:4] == "bc1q":
                         scheme = "Bech32"
+                        bin_address = bech32.decode('bc', address)[1]
+                        self.transaction.outputs[row].scriptpubkey = b'\x00\x14' + bytes(bin_address)
                     elif address[0:4] == "bc1p":
                         scheme = "P2TR"
                     else:
@@ -421,7 +443,7 @@ class MainWindow(QMainWindow):
             del self.transaction.outputs[idx]
         self.update_fee()
 
-    def chooseutxos(self):
+    def addutxos(self):
         j = json.dumps(util.to_dict(self.wallets))
         dialog = ChooseUTXOsDialog(self.wallets)
         if dialog.exec():
@@ -449,6 +471,12 @@ class MainWindow(QMainWindow):
                 utxoTable.setItem(row_idx, 4, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
                 utxoTable.setItem(row_idx, 5, QTableWidgetItem(utxo.metadata.derivation))
                 utxoTable.setItem(row_idx, 6, QTableWidgetItem(utxo.metadata.address))
+
+                script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
+                self.transaction.witnesses.append([])
+                if script_type in (scriptVM.P2WPKH, scriptVM.P2WSH):
+                    self.transaction.has_segwit = True
+
             utxoTable.resizeColumnsToContents()
             self.ui.inputSumEdit.setText(str(sum))
             self.update_fee()
