@@ -304,7 +304,8 @@ class MainWindow(QMainWindow):
         self.ui.   addOutputPushButton.clicked.connect(self.add_output   )
         self.ui.removeOutputPushButton.clicked.connect(self.del_output   )
         self.ui.     signAllPUshButton.clicked.connect(self.sign_all_mine)
-        self.ui.      verifyPushButton.clicked.connect(self.verify       )
+        self.ui.      verifyPushButton.clicked.connect(self.verify_all   )
+        self.ui.      exportPushButton.clicked.connect(self.export       )
 
         utxoTable = self.ui.UTXOsTableWidget
         utxo_columns_titles = ["Signed", "sequence", "amount", "wallet", "confirmations", "derivation", "address"]
@@ -334,67 +335,23 @@ class MainWindow(QMainWindow):
         else:
             event.ignore()
 
-    def verify(self):
-        inputsTable = self.ui.UTXOsTableWidget
-        i = 0
-        for input in self.transaction.inputs:
-            full_script = input.scriptsig + input.txoutput.scriptpubkey
-            print(scriptVM.RunnerVM.run(self.transaction, i, full_script, debug=True))
-            i += 1
+    def export(self):
+        print("serialized transaction", self.transaction.to_bin().hex())
+
+    def verify_all(self):
+        for vin in range(0, len(self.transaction.inputs)):
+            verification = self.transaction.verify(vin)
+            if verification is None:
+                msg = ""
+            elif verification == True:
+                msg = "Yes"
+            else:
+                msg = "No"
+            self.ui.UTXOsTableWidget.setItem(vin, 0, QTableWidgetItem(msg))
 
     def sign_all_mine(self):
-        inputsTable = self.ui.UTXOsTableWidget
-        for row_idx in range(0, inputsTable.rowCount()):
-            utxo = self.transaction.inputs[row_idx].txoutput
-            script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
-            if script_type == scriptVM.P2PKH:
-                data = self.transaction.get_binary_for_legacy_signature(row_idx, transactions.SIGHASH_ALL)
-                data = hashlib.sha256(data).digest()
-
-                wallet     = self.wallets[utxo.metadata.wallet_name]
-                derivation = utxo .metadata.derivation
-                private_key = wallet.privkey(derivation)
-                pubkey = wallet.pubkey(derivation)
-                vk = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
-                while True:
-                    signature = vk.sign(data, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
-                    if ourCrypto.is_signature_standard(signature):
-                        break
-                sighash = bytes([transactions.SIGHASH_ALL])
-                signature = signature + sighash
-
-                scriptsig = bytearray()
-                stream = scriptVM.ScriptByteStream(scriptsig)
-                stream.add_chunk(signature)
-                stream.add_chunk(pubkey)
-
-                self.transaction.inputs[row_idx].scriptsig = scriptsig
-                inputsTable.setItem(row_idx, 0, QTableWidgetItem("Yes"))
-
-            elif script_type == scriptVM.P2WPKH:
-                data = self.transaction.get_binary_for_segwit_signature(row_idx, transactions.SIGHASH_ALL)
-                data = hashlib.sha256(data).digest()
-
-                wallet     = self.wallets[utxo.metadata.wallet_name]
-                derivation = utxo.metadata.derivation
-                private_key = wallet.privkey(derivation)
-                pubkey = wallet.pubkey(derivation)
-                vk = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
-                while True:
-                    signature = vk.sign(data, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
-                    if ourCrypto.is_signature_standard(signature):
-                        break
-                sighash = bytes([transactions.SIGHASH_ALL])
-                signature = signature + sighash
-
-                witness = [signature, pubkey]
-
-                self.transaction.inputs[row_idx].scriptsig = bytearray() # empty
-                self.transaction.witnesses[row_idx] = witness
-
-                inputsTable.setItem(row_idx, 0, QTableWidgetItem("Yes"))
-
-        print("serialized transaction", self.transaction.to_bin().hex())
+        self.transaction.sign_all(self.wallets, transactions.SIGHASH_ALL)
+        self.verify_all()
 
     def output_changed(self, row, col):
         outputsTable = self.ui.outputsTableWidget

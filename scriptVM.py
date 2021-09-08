@@ -145,7 +145,6 @@ class RunnerVM:
             elif op == cls.OP_DUP:
                 stack.append(stack[-1])
             elif op == cls.OP_HASH160:
-                print(stack[-1])
                 ok = hashlib.sha256(stack[-1]).digest()
                 hash = hashlib.new('ripemd160', ok).digest()
                 del stack[-1]
@@ -162,15 +161,12 @@ class RunnerVM:
                 del stack[-1]
                 sighash = signature[-1]
                 signature = signature[:-1]
-                data = tx.get_binary_for_legacy_signature(vin, sighash)
+                preimage = tx.get_binary_for_legacy_signature(vin, sighash)
                 # append 4 bytes of sighash
-                data.append(sighash)
-                data += b"\x00\x00\x00"
-                #data = hashlib.sha256(hashlib.sha256(data).digest()).digest()
-                data = hashlib.sha256(data).digest()
+                data_to_sign = hashlib.sha256(preimage).digest()
                 vk = ecdsa.VerifyingKey.from_string(pubkey, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
                 try:
-                    if vk.verify(signature, data, hashlib.sha256, sigdecode=ecdsa.util.sigdecode_der):
+                    if vk.verify(signature, data_to_sign, hashlib.sha256, sigdecode=ecdsa.util.sigdecode_der):
                         stack.append(1)
                     else:
                         stack.append(0)

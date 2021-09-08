@@ -4,8 +4,12 @@ import binascii
 import json
 import util
 import hashlib
-
 from copy import deepcopy
+
+import ecdsa
+
+import ourCrypto
+import scriptVM
 
 SIGHASH_ALL    = 1
 SIGHASH_NONE   = 2
@@ -364,9 +368,60 @@ class Transaction:
         tx_bin += b"\x00\x00\x00"
         return tx_bin
 
+    def verify(self, vin):
+        if vin >= len(self.inputs):
+            return None
+        input = self.inputs[vin]
+        full_script = input.scriptsig + input.txoutput.scriptpubkey
+        return scriptVM.RunnerVM.run(self, vin, full_script)
+
+    def sign_all(self, wallets, sighash_type):
+        for vin, input in enumerate(self.inputs):
+            utxo = input.txoutput
+            wallet = wallets[utxo.metadata.wallet_name]
+            script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
+            if script_type == scriptVM.P2PKH:
+                preimage = self.get_binary_for_legacy_signature(vin, sighash_type)
+
+                derivation = utxo.metadata.derivation
+                private_key = wallet.privkey(derivation)
+
+                signature = sign(preimage, private_key) + bytes([sighash_type])
+
+                pubkey = wallet.pubkey(derivation)
+                scriptsig = bytearray()
+                stream = scriptVM.ScriptByteStream(scriptsig)
+                stream.add_chunk(signature)
+                stream.add_chunk(pubkey)
+
+                input.scriptsig = scriptsig
+
+            elif script_type == scriptVM.P2WPKH:
+                preimage = self.get_binary_for_segwit_signature(vin, sighash_type)
+
+                derivation = utxo.metadata.derivation
+                private_key = wallet.privkey(derivation)
+
+                signature = sign(preimage, private_key) + bytes([sighash_type])
+
+                pubkey = wallet.pubkey(derivation)
+                witness = [signature, pubkey]
+
+                input.scriptsig = bytearray() # empty
+                self.witnesses[vin] = witness
+
+
     def __repr__(self):
         return json.dumps(util.to_dict(self), indent=2)
 
+def sign(preimage, private_key):
+    tx_hash = hashlib.sha256(preimage).digest()
+    vk = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
+    while True:
+        signature = vk.sign(tx_hash, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
+        if ourCrypto.is_signature_standard(signature):
+            break
+    return signature
 
 if __name__ == "__main__":
     tx = Transaction.from_hex('0100000002fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f0000000000eeffffffef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a0100000000ffffffff02202cb206000000001976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac9093510d000000001976a9143bde42dbee7e4dbe6a21b2d50ce2f0167faa815988ac11000000')
