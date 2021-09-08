@@ -1,20 +1,31 @@
-# This Python file uses the following encoding: utf-8
+
+# standard libs imports
+
 import os
 import sys
 import binascii
 from pathlib import Path
 from io import BytesIO
-import requests
 import json
 from copy import deepcopy
 import hashlib
-import ecdsa
-import bech32
+
+# pip libs imports
+
+from imports import auto_import
+auto_import("requests")
+auto_import("ecdsa")
+auto_import("bech32")
+auto_import("PySide6")
+auto_import("qrcode")
+auto_import("bip39")
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox
 from PySide6.QtCore import QFile, QIODevice, Qt, QSize
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QPixmap, QPalette
+
+# local imports
 
 from ui.mainwindow import Ui_MainWindow
 from ui.addwalletfromwordsdialog import Ui_AddWalletFromWordsDialog
@@ -22,18 +33,16 @@ from ui.addwalletfromxprvdialog  import Ui_AddWalletFromXprvDialog
 from ui.walletinfo import Ui_walletInfoDialog
 from ui.chooseutxosdialog import Ui_ChooseUTXOsDialog
 
-import qrcode
-
-import bip39
-import bip32utils
-from bip32utils import Base58
-
 import explorer
 import transactions
 import util
 import wallets
 import ourCrypto
 import scriptVM
+
+# this should be a dependency
+import bip32utils
+from bip32utils import Base58
 
 testnet = True
 

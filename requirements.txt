@@ -1,0 +1,8 @@
+qrcode==7.2
+bech32==1.2.0
+ecdsa==0.17.0
+requests==2.22.0
+bip39==0.0.2
+Pillow==7.0.0
+pycryptodome==3.10.1
+PySide6==6.1.3
