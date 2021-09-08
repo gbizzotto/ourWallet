@@ -65,8 +65,8 @@ class HDWallet(Wallet):
 
 class WordsWallet(HDWallet):
     def __init__(self, name, phrase, passwd, testnet):
-        seed = bip39.phrase_to_seed(" ".join(str(self.phrase).split()), self.passwd)
-        root_key = bip32utils.BIP32Key.fromEntropy(seed, testnet=self.testnet)
+        seed = bip39.phrase_to_seed(" ".join(str(phrase).split()), passwd)
+        root_key = bip32utils.BIP32Key.fromEntropy(seed, testnet=testnet)
         super(WordsWallet, self).__init__(name, root_key)
         self.phrase  = phrase
         self.passwd  = passwd
