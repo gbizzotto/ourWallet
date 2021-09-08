@@ -299,7 +299,8 @@ class MainWindow(QMainWindow):
         self.ui.actionLoad_from_words.triggered.connect(self.add_wallet_from_words)
         self.ui.actionLoad_from_xprv .triggered.connect(self.add_wallet_from_xprv )
         self.ui.actionOpen           .triggered.connect(self.open_wallet_file     )
-        self.ui. selectUTXOsPushButton.clicked.connect(self.addutxos     )
+        self.ui. selectUTXOsPushButton.clicked.connect(self.add_utxos    )
+        self.ui.      removeUTXOButton.clicked.connect(self.del_utxos    )
         self.ui.   addOutputPushButton.clicked.connect(self.add_output   )
         self.ui.removeOutputPushButton.clicked.connect(self.del_output   )
         self.ui.     signAllPUshButton.clicked.connect(self.sign_all_mine)
@@ -426,7 +427,7 @@ class MainWindow(QMainWindow):
             del self.transaction.outputs[idx]
         self.update_fee()
 
-    def addutxos(self):
+    def add_utxos(self):
         j = json.dumps(util.to_dict(self.wallets))
         dialog = ChooseUTXOsDialog(self.wallets)
         if dialog.exec():
@@ -466,6 +467,15 @@ class MainWindow(QMainWindow):
             utxoTable.resizeColumnsToContents()
             self.ui.inputSumEdit.setText(str(sum))
             self.update_fee()
+
+    def del_utxos(self):
+        utxoTable = self.ui.UTXOsTableWidget
+        selected_indexes = list(set([qmi.row() for qmi in utxoTable.selectedIndexes()]))
+        selected_indexes.sort()
+        for idx in selected_indexes[::-1]:
+            utxoTable.removeRow(idx)
+            del self.transaction.inputs[idx]
+        self.update_fee()
 
     def update_fee(self):
         input_total = int(self.ui.inputSumEdit.text())

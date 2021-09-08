@@ -45,10 +45,20 @@ class Ui_MainWindow(object):
         self.UTXOsGroupBox.setAlignment(Qt.AlignCenter)
         self.verticalLayout_4 = QVBoxLayout(self.UTXOsGroupBox)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.horizontalLayout_11 = QHBoxLayout()
+        self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
         self.selectUTXOsPushButton = QPushButton(self.UTXOsGroupBox)
         self.selectUTXOsPushButton.setObjectName(u"selectUTXOsPushButton")
 
-        self.verticalLayout_4.addWidget(self.selectUTXOsPushButton)
+        self.horizontalLayout_11.addWidget(self.selectUTXOsPushButton)
+
+        self.removeUTXOButton = QPushButton(self.UTXOsGroupBox)
+        self.removeUTXOButton.setObjectName(u"removeUTXOButton")
+
+        self.horizontalLayout_11.addWidget(self.removeUTXOButton)
+
+
+        self.verticalLayout_4.addLayout(self.horizontalLayout_11)
 
         self.UTXOsTableWidget = QTableWidget(self.UTXOsGroupBox)
         self.UTXOsTableWidget.setObjectName(u"UTXOsTableWidget")
@@ -374,6 +384,7 @@ class Ui_MainWindow(object):
         self.actionOpen.setText(QCoreApplication.translate("MainWindow", u"Open...", None))
         self.UTXOsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"UTXOs", None))
         self.selectUTXOsPushButton.setText(QCoreApplication.translate("MainWindow", u"Select", None))
+        self.removeUTXOButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
         self.outputsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"Outputs", None))
         self.addOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
         self.removeOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
