@@ -90,7 +90,7 @@ class WalletInfoDialog(QDialog):
         self.ui.derivationCombo.addItem("Mycelium legacy addresses (2015 onward)", "m/44'/"+network+"'/0'/0/0")
         self.ui.derivationCombo.addItem("Mycelium P2SH addresses (2018 onward)"  , "m/49'/"+network+"'/0'/0/0")
         self.ui.derivationCombo.addItem("Mycelium segwit addresses (2018 onward)", "m/84'/"+network+"'/0'/0/0")
-        self.ui.utxoDerivationCombo.addItem("Try everything (slow)", "m, m/x, m/0/x, m/1/x, m/0'/0'/x'")
+        self.ui.utxoDerivationCombo.addItem("Try everything (slow)", "m, m/x, m/0/x, m/1/x, m/0'/0'/x', m/44'/"+network+"'/0'/0/x, m/44'/"+network+"'/0'/1/x, m/49'/"+network+"'/0'/0/x, m/49'/"+network+"'/0'/1/x, m/84'/"+network+"'/0'/0/x, m/84'/"+network+"'/0'/1/x")
         self.ui.utxoDerivationCombo.addItem("Root key only", "m")
         self.ui.utxoDerivationCombo.addItem("Simple derivations", "m/x")
         self.ui.utxoDerivationCombo.addItem("Bip44/49/84 Account key", "m/0/x, m/1/x")
