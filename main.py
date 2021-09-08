@@ -9,10 +9,21 @@ from io import BytesIO
 import json
 from copy import deepcopy
 import hashlib
+import importlib.util
+
+def auto_import(module_name):
+    if importlib.util.find_spec(module_name) is None:
+        if auto_import.install == None:
+            x = input("Install missing modules? (Y/n)")
+            auto_import.install = x in ("y", "Y", "")
+        if auto_import.install:
+            from pip._internal import main as pipmain
+            pipmain(['install', module_name])
+    globals()[module_name] = __import__(module_name)
+auto_import.install = None
 
 # pip libs imports
 
-from imports import auto_import
 auto_import("requests")
 auto_import("ecdsa")
 auto_import("bech32")
