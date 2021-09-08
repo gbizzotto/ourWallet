@@ -172,24 +172,25 @@ class WalletInfoDialog(QDialog):
 
 def add_utxos_to_table(utxos, utxoTable):
     balance = 0
-    current_height = explorer.get_current_height(testnet)
     for utxo in utxos:
         balance += utxo.amount
-        add_utxo_to_table(utxo, utxoTable, utxo.metadata.derivation, utxo.metadata.address, current_height)
+        add_utxo_to_table(utxo, utxoTable)
     return balance
 
-def add_utxo_to_table(utxo, utxoTable, derivation, address, current_height):
+def add_utxo_to_table(utxo, utxoTable):
+    current_height = explorer.get_current_height(testnet)
     row_idx = utxoTable.rowCount()
     utxoTable.insertRow(row_idx)
     if utxo.parent_tx is None:
         utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
+    print("height", utxo.parent_tx)
     if utxo.parent_tx.metadata.height:
-        utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
+        utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
     else:
         utxoTable.setItem(row_idx, 0, QTableWidgetItem("Unconfirmed"))
     utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
-    utxoTable.setItem(row_idx, 2, QTableWidgetItem(derivation))
-    utxoTable.setItem(row_idx, 3, QTableWidgetItem(address))
+    utxoTable.setItem(row_idx, 2, QTableWidgetItem(utxo.metadata.derivation))
+    utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.address))
 
 # wise topic three session hint worry auction audit tomorrow noodle will auction
 
@@ -276,7 +277,10 @@ class ChooseUTXOsDialog(QDialog):
                 utxoTable.insertRow(row_idx)
                 utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(utxo.amount)))
                 utxoTable.setItem(row_idx, 1, QTableWidgetItem(wallet.name))
-                utxoTable.setItem(row_idx, 2, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
+                if utxo.parent_tx.metadata.height:
+                    utxoTable.setItem(row_idx, 2, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
+                else:
+                    utxoTable.setItem(row_idx, 2, QTableWidgetItem("Unconfirmed"))
                 utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.derivation))
                 utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.metadata.address))
     def selection_changed(self):
@@ -491,7 +495,10 @@ class MainWindow(QMainWindow):
                 utxoTable.setItem(row_idx, 1, QTableWidgetItem("0"));
                 utxoTable.setItem(row_idx, 2, QTableWidgetItem(str(utxo.amount)))
                 utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.wallet_name))
-                utxoTable.setItem(row_idx, 4, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
+                if utxo.parent_tx.metadata.height:
+                    utxoTable.setItem(row_idx, 4, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
+                else:
+                    utxoTable.setItem(row_idx, 4, QTableWidgetItem("Unconfirmed"))
                 utxoTable.setItem(row_idx, 5, QTableWidgetItem(utxo.metadata.derivation))
                 utxoTable.setItem(row_idx, 6, QTableWidgetItem(utxo.metadata.address))
 

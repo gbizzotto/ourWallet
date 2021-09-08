@@ -162,9 +162,7 @@ class RunnerVM:
                 del stack[-1]
                 sighash = signature[-1]
                 signature = signature[:-1]
-                txcopy = deepcopy(tx)
-                txcopy.strip_for_signature(vin, sighash)
-                data = txcopy.to_bin()
+                data = tx.get_binary_for_legacy_signature(vin, sighash)
                 # append 4 bytes of sighash
                 data.append(sighash)
                 data += b"\x00\x00\x00"

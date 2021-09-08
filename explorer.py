@@ -30,8 +30,7 @@ def get_transaction_metadata(txid, testnet):
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid.hex())
     contents = json.loads(page.text)
-    metadata            = transactions.Transaction.Metadata()
-    print(contents)
+    metadata = transactions.Transaction.Metadata()
     if contents["status"]["confirmed"]:
         metadata.height     = contents["status"]["block_height"]
         metadata.block_hash = contents["status"]["block_hash"]
@@ -41,7 +40,7 @@ def get_transaction_metadata(txid, testnet):
 
     get_transaction_metadata.cache[txid.hex()] = copy.copy(metadata.__dict__)
 
-    metadata.txid       = txid
+    metadata.txid = txid
 
     # write cache to file
     with open("txsmd.cache", "w") as f:
@@ -61,7 +60,7 @@ def get_transaction(txid, testnet):
                 for k,v in get_transaction.cache.items():
                     get_transaction.bincache[k] = v
                     get_transaction.cache[k] = transactions.Transaction.from_hex(v)
-                    get_transaction.cache[k].metadata = get_transaction_metadata(txid, testnet)
+                    get_transaction.cache[k].metadata = get_transaction_metadata(binascii.unhexlify(k), testnet)
 
     if txid.hex() in get_transaction.cache:
         return get_transaction.cache[txid.hex()]
@@ -123,7 +122,7 @@ def get_utxos(wallet_name, address, derivation, testnet):
     # blockcypher
 
 def get_output_scriptpubkey(txid, vout, testnet):
-    print("explorer get_output_scriptpubkey", txid, vout)
+    print("explorer get_output_scriptpubkey", txid.hex() + ":" + vout)
 
     # blockstream
     network = "testnet/" if testnet else ""

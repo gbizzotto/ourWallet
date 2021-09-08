@@ -22,6 +22,7 @@ class Ui_ChooseUTXOsDialog(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.UTXOsTableWidget = QTableWidget(ChooseUTXOsDialog)
         self.UTXOsTableWidget.setObjectName(u"UTXOsTableWidget")
+        self.UTXOsTableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.UTXOsTableWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         self.UTXOsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.UTXOsTableWidget.setSortingEnabled(True)
