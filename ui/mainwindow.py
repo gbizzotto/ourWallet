@@ -352,11 +352,11 @@ class Ui_MainWindow(object):
         self.menuTX.addAction(self.actionImport)
         self.menuWallets.addSeparator()
         self.menuWallets.addAction(self.actionOpen)
-        self.menuWallets.addSeparator()
         self.menuWallets.addAction(self.actionLoad_from_words)
         self.menuWallets.addAction(self.actionLoad_from_xprv)
         self.menuWallets.addAction(self.actionNew_HD)
         self.menuWallets.addAction(self.actionNew_empty)
+        self.menuWallets.addSeparator()
 
         self.retranslateUi(MainWindow)
 
@@ -366,7 +366,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"ourWallet", None))
         self.actionImport.setText(QCoreApplication.translate("MainWindow", u"Import...", None))
-        self.actionLoad_from_words.setText(QCoreApplication.translate("MainWindow", u"Regenerate from words", None))
+        self.actionLoad_from_words.setText(QCoreApplication.translate("MainWindow", u"Regenerate from words...", None))
         self.actionLoad_from_xprv.setText(QCoreApplication.translate("MainWindow", u"Regenerate from xprv...", None))
         self.actionNew_HD.setText(QCoreApplication.translate("MainWindow", u"New HD...", None))
         self.actionNew_empty.setText(QCoreApplication.translate("MainWindow", u"New empty...", None))

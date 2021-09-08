@@ -90,7 +90,29 @@ class WalletInfoDialog(QDialog):
         self.ui.utxoRefreshButton.clicked.connect(self.refresh_utxos)
         self.ui.       saveButton.clicked.connect(self.save)
 
-        balance = add_utxos_to_table(wallet.utxos, self.ui.utxoTable)
+        self.display_utxos(wallet.utxos)
+
+    def display_utxos(self, utxos):
+        current_height = explorer.get_current_height(testnet)
+        utxoTable = self.ui.utxoTable
+        utxoTable.setRowCount(0)
+        balance = 0
+        for utxo in utxos:
+            balance += utxo.amount
+
+            row_idx = utxoTable.rowCount()
+            utxoTable.insertRow(row_idx)
+            if utxo.parent_tx is None:
+                utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
+            print("height", utxo.parent_tx)
+            if utxo.parent_tx.metadata.height:
+                utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
+            else:
+                utxoTable.setItem(row_idx, 0, QTableWidgetItem("Unconfirmed"))
+            utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
+            utxoTable.setItem(row_idx, 2, QTableWidgetItem(utxo.metadata.derivation))
+            utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.address))
+
         self.ui.balanceEdit.setText(str(balance))
 
     def fill_combos(self):
@@ -153,9 +175,7 @@ class WalletInfoDialog(QDialog):
         if new_utxos != old_utxos:
             self.wallet.utxos = utxos
             self.wallet.dirty = True
-            self.ui.utxoTable.setRowCount(0)
-            balance = add_utxos_to_table(utxos, self.ui.utxoTable)
-            self.ui.balanceEdit.setText(str(balance))
+            self.display_utxos(utxos)
 
     def save(self):
         filename = self.wallet.filename
@@ -163,36 +183,14 @@ class WalletInfoDialog(QDialog):
             filename = QFileDialog.getSaveFileName(self, 'Save wallet to file', filter="Wallet files(*.wlt);;All files(*)")[0]
             if len(filename) == 0:
                 return
+            if '.' not in filename:
+                filename += ".wlt"
         j = json.dumps(self.wallet.to_dict())
         bin = ourCrypto.encrypt(j, b"ourPassword")
         file = open(filename, 'wb')
         file.write(bin)
         self.wallet.filename = filename
         self.wallet.dirty    = False
-
-def add_utxos_to_table(utxos, utxoTable):
-    balance = 0
-    for utxo in utxos:
-        balance += utxo.amount
-        add_utxo_to_table(utxo, utxoTable)
-    return balance
-
-def add_utxo_to_table(utxo, utxoTable):
-    current_height = explorer.get_current_height(testnet)
-    row_idx = utxoTable.rowCount()
-    utxoTable.insertRow(row_idx)
-    if utxo.parent_tx is None:
-        utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
-    print("height", utxo.parent_tx)
-    if utxo.parent_tx.metadata.height:
-        utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
-    else:
-        utxoTable.setItem(row_idx, 0, QTableWidgetItem("Unconfirmed"))
-    utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
-    utxoTable.setItem(row_idx, 2, QTableWidgetItem(utxo.metadata.derivation))
-    utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.address))
-
-# wise topic three session hint worry auction audit tomorrow noodle will auction
 
 class AddWalletFromWordsDialog(QDialog):
     def __init__(self):
@@ -297,9 +295,6 @@ class MainWindow(QMainWindow):
         self.ui.actionLoad_from_words.triggered.connect(self.add_wallet_from_words)
         self.ui.actionLoad_from_xprv .triggered.connect(self.add_wallet_from_xprv )
         self.ui.actionOpen           .triggered.connect(self.open_wallet_file     )
-        self.wallets_menu = QMenu("Wallets info")
-        self.ui.menuWallets.insertMenu(self.ui.actionLoad_from_words, self.wallets_menu)
-        self.ui.menuWallets.insertSeparator(self.ui.actionLoad_from_words)
         self.ui. selectUTXOsPushButton.clicked.connect(self.addutxos     )
         self.ui.   addOutputPushButton.clicked.connect(self.add_output   )
         self.ui.removeOutputPushButton.clicked.connect(self.del_output   )
@@ -485,14 +480,14 @@ class MainWindow(QMainWindow):
         w = wallets.from_dict(d)
         w.filename = filename
         self.wallets[w.name] = w
-        menuaction = self.wallets_menu.addAction(w.name)
+        menuaction = self.ui.menuWallets.addAction(w.name)
         menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
 
     def add_wallet_from_dialog(self, dialog):
         if dialog.exec():
             w = dialog.wallet
             self.wallets[w.name] = w
-            menuaction = self.wallets_menu.addAction(w.name)
+            menuaction = self.ui.menuWallets.addAction(w.name)
             menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))
             dialog = WalletInfoDialog(self.wallets[w.name])
             if dialog.exec():
