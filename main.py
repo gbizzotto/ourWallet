@@ -92,6 +92,10 @@ class WalletInfoDialog(QDialog):
 
         self.display_utxos(wallet.utxos)
 
+        # workaround for qrcode size glitch
+        self.ui.tabWidget.setCurrentIndex(1)
+        self.ui.tabWidget.setCurrentIndex(0)
+
     def display_utxos(self, utxos):
         current_height = explorer.get_current_height(testnet)
         utxoTable = self.ui.utxoTable
