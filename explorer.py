@@ -31,8 +31,13 @@ def get_transaction_metadata(txid, testnet):
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid.hex())
     contents = json.loads(page.text)
     metadata            = transactions.Transaction.Metadata()
-    metadata.height     = contents["status"]["block_height"]
-    metadata.block_hash = contents["status"]["block_hash"]
+    print(contents)
+    if contents["status"]["confirmed"]:
+        metadata.height     = contents["status"]["block_height"]
+        metadata.block_hash = contents["status"]["block_hash"]
+    else:
+        metadata.height     = None
+        metadata.block_hash = None
 
     get_transaction_metadata.cache[txid.hex()] = copy.copy(metadata.__dict__)
 

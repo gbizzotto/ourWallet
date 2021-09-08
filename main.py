@@ -163,7 +163,10 @@ def add_utxo_to_table(utxo, utxoTable, derivation, address, current_height):
     utxoTable.insertRow(row_idx)
     if utxo.parent_tx is None:
         utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
-    utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
+    if utxo.parent_tx.metadata.height:
+        utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(current_height - utxo.parent_tx.metadata.height)))
+    else:
+        utxoTable.setItem(row_idx, 0, QTableWidgetItem("Unconfirmed"))
     utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
     utxoTable.setItem(row_idx, 2, QTableWidgetItem(derivation))
     utxoTable.setItem(row_idx, 3, QTableWidgetItem(address))
