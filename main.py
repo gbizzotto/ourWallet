@@ -108,7 +108,6 @@ class WalletInfoDialog(QDialog):
             utxoTable.insertRow(row_idx)
             if utxo.parent_tx is None:
                 utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
-            print("height", utxo.parent_tx)
             if utxo.parent_tx.metadata.height:
                 utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
             else:
