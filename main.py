@@ -298,7 +298,7 @@ class MainWindow(QMainWindow):
         self.ui.actionLoad_from_words.triggered.connect(self.add_wallet_from_words)
         self.ui.actionLoad_from_xprv .triggered.connect(self.add_wallet_from_xprv )
         self.ui.actionOpen           .triggered.connect(self.open_wallet_file     )
-        self.ui. selectUTXOsPushButton.clicked.connect(self.add_utxos    )
+        self.ui.    addUTXOsPushButton.clicked.connect(self.add_utxos    )
         self.ui.      removeUTXOButton.clicked.connect(self.del_utxos    )
         self.ui.   addOutputPushButton.clicked.connect(self.add_output   )
         self.ui.removeOutputPushButton.clicked.connect(self.del_output   )
@@ -414,7 +414,6 @@ class MainWindow(QMainWindow):
     def add_output(self):
         outputTable = self.ui.outputsTableWidget
         outputTable.insertRow(outputTable.rowCount())
-        self.update_fee()
         self.transaction.outputs.append(transactions.TxOutput())
 
     def del_output(self):
@@ -431,40 +430,26 @@ class MainWindow(QMainWindow):
         dialog = ChooseUTXOsDialog(self.wallets)
         if dialog.exec():
             utxoTable = self.ui.UTXOsTableWidget
-            utxoTable.setRowCount(0)
             current_height = explorer.get_current_height(testnet)
-            sum = 0
-            self.transaction.inputs = []
             for utxo in dialog.utxos:
-                txin = transactions.TxInput()
-                txin.txid = utxo.metadata.txid
-                txin.vout = utxo.metadata.vout
-                txin.scriptsig = b''
-                txin.sequence = 0
-                txin.parent_tx = self.transaction
-                txin.txoutput = utxo
-                self.transaction.inputs.append(txin)
+                if self.transaction.has(utxo):
+                    continue
+                vin = self.transaction.add(utxo)
+                input = self.transaction.inputs[vin]
 
-                sum += utxo.amount
-                row_idx = utxoTable.rowCount()
-                utxoTable.insertRow(row_idx)
-                utxoTable.setItem(row_idx, 1, QTableWidgetItem("0"));
-                utxoTable.setItem(row_idx, 2, QTableWidgetItem(str(utxo.amount)))
-                utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.wallet_name))
+                assert vin == utxoTable.rowCount()
+                utxoTable.insertRow(vin)
+                utxoTable.setItem(vin, 1, QTableWidgetItem(str(input.sequence)));
+                utxoTable.setItem(vin, 2, QTableWidgetItem(str(utxo.amount)))
+                utxoTable.setItem(vin, 3, QTableWidgetItem(utxo.metadata.wallet_name))
                 if utxo.parent_tx.metadata.height:
-                    utxoTable.setItem(row_idx, 4, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
+                    utxoTable.setItem(vin, 4, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
                 else:
-                    utxoTable.setItem(row_idx, 4, QTableWidgetItem("Unconfirmed"))
-                utxoTable.setItem(row_idx, 5, QTableWidgetItem(utxo.metadata.derivation))
-                utxoTable.setItem(row_idx, 6, QTableWidgetItem(utxo.metadata.address))
-
-                script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
-                self.transaction.witnesses.append([])
-                if script_type in (scriptVM.P2WPKH, scriptVM.P2WSH):
-                    self.transaction.has_segwit = True
+                    utxoTable.setItem(vin, 4, QTableWidgetItem("Unconfirmed"))
+                utxoTable.setItem(vin, 5, QTableWidgetItem(utxo.metadata.derivation))
+                utxoTable.setItem(vin, 6, QTableWidgetItem(utxo.metadata.address))
 
             utxoTable.resizeColumnsToContents()
-            self.ui.inputSumEdit.setText(str(sum))
             self.update_fee()
 
     def del_utxos(self):
@@ -477,9 +462,11 @@ class MainWindow(QMainWindow):
         self.update_fee()
 
     def update_fee(self):
-        input_total = int(self.ui.inputSumEdit.text())
-        output_total = int(self.ui.outputSumEdit.text())
+        input_total = sum([utxo.txoutput.amount for utxo in self.transaction.inputs])
+        output_total = sum([out.amount for out in self.transaction.outputs])
         fee = input_total - output_total
+        self.ui.inputSumEdit.setText(str(input_total))
+        self.ui.outputSumEdit.setText(str(output_total))
         self.ui.feeEdit.setText(str(fee))
 
     def open_wallet_file(self):

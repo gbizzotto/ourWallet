@@ -203,6 +203,32 @@ class Transaction:
         self.witnesses = []
         self.locktime = 0
 
+    def has(self, utxo):
+        for input in self.inputs:
+            if input.txid == utxo.metadata.txid and input.vout == utxo.metadata.vout:
+                return True
+        return False
+
+    def add(self, utxo):
+        for input in self.inputs:
+            if input.txid == utxo.metadata.txid and input.vout == utxo.metadata.vout:
+                return vin
+        txin = TxInput()
+        txin.txid = utxo.metadata.txid
+        txin.vout = utxo.metadata.vout
+        txin.scriptsig = b''
+        txin.sequence = 0
+        txin.parent_tx = self
+        txin.txoutput = utxo
+        self.inputs.append(txin)
+        self.witnesses.append([])
+
+        script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
+        if script_type in (scriptVM.P2WPKH, scriptVM.P2WSH):
+            self.transaction.has_segwit = True
+
+        return len(self.inputs) - 1
+
     def to_bin(self):
         bin = bytearray()
         stream = TxByteStream(bin)

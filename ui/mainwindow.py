@@ -47,10 +47,10 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.horizontalLayout_11 = QHBoxLayout()
         self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
-        self.selectUTXOsPushButton = QPushButton(self.UTXOsGroupBox)
-        self.selectUTXOsPushButton.setObjectName(u"selectUTXOsPushButton")
+        self.addUTXOsPushButton = QPushButton(self.UTXOsGroupBox)
+        self.addUTXOsPushButton.setObjectName(u"addUTXOsPushButton")
 
-        self.horizontalLayout_11.addWidget(self.selectUTXOsPushButton)
+        self.horizontalLayout_11.addWidget(self.addUTXOsPushButton)
 
         self.removeUTXOButton = QPushButton(self.UTXOsGroupBox)
         self.removeUTXOButton.setObjectName(u"removeUTXOButton")
@@ -73,7 +73,7 @@ class Ui_MainWindow(object):
         self.UTXOsTableWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         self.UTXOsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.UTXOsTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.UTXOsTableWidget.verticalHeader().setVisible(False)
+        self.UTXOsTableWidget.verticalHeader().setVisible(True)
 
         self.verticalLayout_4.addWidget(self.UTXOsTableWidget)
 
@@ -109,7 +109,7 @@ class Ui_MainWindow(object):
         self.outputsTableWidget.setAlternatingRowColors(True)
         self.outputsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.outputsTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.outputsTableWidget.verticalHeader().setVisible(False)
+        self.outputsTableWidget.verticalHeader().setVisible(True)
 
         self.verticalLayout_5.addWidget(self.outputsTableWidget)
 
@@ -383,7 +383,7 @@ class Ui_MainWindow(object):
         self.actionWallets.setText(QCoreApplication.translate("MainWindow", u"Wallets", None))
         self.actionOpen.setText(QCoreApplication.translate("MainWindow", u"Open...", None))
         self.UTXOsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"UTXOs", None))
-        self.selectUTXOsPushButton.setText(QCoreApplication.translate("MainWindow", u"Select", None))
+        self.addUTXOsPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
         self.removeUTXOButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
         self.outputsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"Outputs", None))
         self.addOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))

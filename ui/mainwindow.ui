@@ -31,9 +31,9 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_11">
              <item>
-              <widget class="QPushButton" name="selectUTXOsPushButton">
+              <widget class="QPushButton" name="addUTXOsPushButton">
                <property name="text">
-                <string>Select</string>
+                <string>Add</string>
                </property>
               </widget>
              </item>
@@ -73,7 +73,7 @@
               <bool>true</bool>
              </attribute>
              <attribute name="verticalHeaderVisible">
-              <bool>false</bool>
+              <bool>true</bool>
              </attribute>
             </widget>
            </item>
@@ -131,7 +131,7 @@
               <bool>true</bool>
              </attribute>
              <attribute name="verticalHeaderVisible">
-              <bool>false</bool>
+              <bool>true</bool>
              </attribute>
             </widget>
            </item>
