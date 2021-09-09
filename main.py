@@ -260,13 +260,22 @@ class ChooseUTXOsDialog(QDialog):
         self.ui.setupUi(self)
         self.wallets = ws
         self.known_utxos = []
-        self.utxos       = []
+        self. w_utxos = []
+        self.ff_utxos = []
+
+        self.ui.ffDLDataButton.clicked.connect(self.add_free_floating)
+        self.accepted.connect(self.dialog_accepted)
 
         utxoTable = self.ui.UTXOsTableWidget
         utxo_columns_titles = ["amount", "wallet", "confirmations", "derivation", "address"]
         utxoTable.setColumnCount(len(utxo_columns_titles))
         utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
         utxoTable.itemSelectionChanged.connect(self.selection_changed)
+
+        ffutxoTable = self.ui.ffUTXOsTableWidget
+        ffutxo_columns_titles = ["amount", "confirmations"]
+        ffutxoTable.setColumnCount(len(ffutxo_columns_titles))
+        ffutxoTable.setHorizontalHeaderLabels(ffutxo_columns_titles)
 
         current_height = explorer.get_current_height(testnet)
         for wallet in self.wallets.values():
@@ -284,11 +293,44 @@ class ChooseUTXOsDialog(QDialog):
                     utxoTable.setItem(row_idx, 2, QTableWidgetItem("Unconfirmed"))
                 utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.derivation))
                 utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.metadata.address))
+
+    def dialog_accepted(self):
+        if self.ui.tabWidget.currentIndex() == 0:
+            self.utxos = self.w_utxos
+        elif self.ui.tabWidget.currentIndex() == 1:
+            self.utxos = self.ff_utxos
+
     def selection_changed(self):
         utxoTable = self.ui.UTXOsTableWidget
         selected_indexes = list(set([qmi.row() for qmi in self.ui.UTXOsTableWidget.selectedIndexes()]))
         self.ui.sumLineEdit.setText(str(sum([int(utxoTable.item(row_idx, 0).text()) for row_idx in selected_indexes])))
-        self.utxos = [self.known_utxos[row_idx] for row_idx in selected_indexes]
+        self.w_utxos = [self.known_utxos[row_idx] for row_idx in selected_indexes]
+
+    def add_free_floating(self):
+        txid_hex = self.ui.ffTxidEdit.text()
+        vout = int(self.ui.ffVoutEdit.text())
+
+        utxo = explorer.get_utxo(txid_hex, vout, testnet)
+        if utxo is None:
+            return
+
+        utxoTable = self.ui.ffUTXOsTableWidget
+
+        for i,u in enumerate(self.ff_utxos):
+            if u.metadata.txid == utxo.metadata.txid and u.metadata.vout == utxo.metadata.vout:
+                del self.ff_utxos[i]
+                utxoTable.removeRow(i)
+                break
+
+        self.ff_utxos.append(utxo)
+        row_idx = utxoTable.rowCount()
+        utxoTable.insertRow(row_idx)
+        utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(utxo.amount)))
+        if utxo.parent_tx.metadata.height:
+            utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
+        else:
+            utxoTable.setItem(row_idx, 1, QTableWidgetItem("Unconfirmed"))
+
 
 class MainWindow(QMainWindow):
     def __init__(self):

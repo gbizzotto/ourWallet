@@ -58,6 +58,8 @@ def go_get_transaction(txid, testnet):
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid.hex()+"/hex")
+    if page.status_code != 200:
+        return None, None
     t = transactions.Transaction.from_hex(page.text)
     t.metadata = get_transaction_metadata(txid, testnet)
     return t, page.text
@@ -77,6 +79,8 @@ def get_transaction(txid, testnet):
 
     if txid.hex() not in get_transaction.cache:
         tx, bintx = go_get_transaction(txid, testnet)
+        if tx is None:
+            return None
         get_transaction.cache[txid.hex()] = tx
         get_transaction.bincache[txid.hex()] = bintx
         # write cache to file
@@ -96,6 +100,26 @@ def is_output_spent(txid, vout, testnet):
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid.hex()+"/outspend/"+str(vout))
     return json.loads(page.text)["spent"]
 
+def get_utxo(txid_hex, vout, testnet):
+    txid = binascii.unhexlify(txid_hex)
+    transaction = get_transaction(txid, testnet)
+    if transaction is None:
+        txid_hex = txid_hex[::-1]
+        txid = binascii.unhexlify(txid_hex)
+        transaction = get_transaction(txid, testnet)
+    if transaction is None:
+        return None
+
+    txout = transaction.outputs[vout]
+    txout.parent_tx = transaction
+    txout.metadata             = transactions.TxOutput.Metadata()
+    txout.metadata.wallet_name = None
+    txout.metadata.address     = None
+    txout.metadata.derivation  = None
+    txout.metadata.spent       = is_output_spent(txid, vout, testnet)
+    txout.metadata.txid        = txid
+    txout.metadata.vout        = vout
+    return txout
 
 def get_utxos(wallet_name, address, derivation, testnet):
     print("explorer get_utxos", address, derivation)

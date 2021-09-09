@@ -225,7 +225,7 @@ class Transaction:
 
         script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
         if script_type in (scriptVM.P2WPKH, scriptVM.P2WSH):
-            self.transaction.has_segwit = True
+            self.has_segwit = True
 
         return len(self.inputs) - 1
 
@@ -313,7 +313,6 @@ class Transaction:
                 prevouts.extend(bytes([(input.vout>> 8)&0xFF]))
                 prevouts.extend(bytes([(input.vout>>16)&0xFF]))
                 prevouts.extend(bytes([(input.vout>>24)&0xFF]))
-            print("prevouts preimage", prevouts.hex())
             hash_prevouts = hashlib.sha256(hashlib.sha256(prevouts).digest()).digest()
         else:
             hash_prevouts = empty_hash
