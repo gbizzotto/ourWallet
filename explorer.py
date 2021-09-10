@@ -23,6 +23,7 @@ def go_push_transaction(tx, testnet):
     page = requests.post("https://blockstream.info/"+network+"api/tx", data=tx_hex)
     if page.status_code != 200:
         print("page.status_code", page.status_code)
+        print("page.text", page.text)
         return None
     txid = page.text
     print("txid", txid)
@@ -32,8 +33,8 @@ def go_push_transaction(tx, testnet):
 
     # write tx to list of our own
     # TODO evaluate privacy concerns around this
-    with open(cache_folder+"ourTransactions", "a") as f:
-        f.write(txhex+"\n")
+    with open("ourTransactions", "a") as f:
+        f.write(tx_hex+"\n")
 
     return txid
 
@@ -43,6 +44,9 @@ def go_get_transaction_metadata(txid, testnet):
     #blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid.hex())
+    if page.status_code != 200:
+        print("No metadata for tx", txid.hex())
+        return None
     contents = json.loads(page.text)
     metadata = transactions.Transaction.Metadata()
     if contents["status"]["confirmed"]:
@@ -122,6 +126,9 @@ def is_output_spent(txid, vout, testnet):
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid.hex()+"/outspend/"+str(vout))
+    if page.status_code != 200:
+        print("page.status_code", page.status_code)
+        return False
     return json.loads(page.text)["spent"]
 
 def get_utxo(txid_hex, vout, testnet):
@@ -151,6 +158,9 @@ def get_utxos(wallet_name, address, derivation, testnet):
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"api/address/"+address+"/utxo")
+    if page.status_code != 200:
+        print("page.status_code", page.status_code)
+        return []
     utxos = json.loads(page.text)
     result = []
     for u in utxos:
@@ -176,6 +186,9 @@ def get_output_scriptpubkey(txid, vout, testnet):
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"tx/"+txid)
+    if page.status_code != 200:
+        print("page.status_code", page.status_code)
+        return None
     return binascii.unhexlify(json.loads(page.text)["vout"][vout]["scriptpubkey"])
 
 def get_current_height(testnet):
@@ -189,6 +202,9 @@ def get_current_height(testnet):
     # blockstream
     network = "testnet/" if testnet else ""
     page = requests.get("https://blockstream.info/"+network+"/api/blocks/tip/height")
+    if page.status_code != 200:
+        print("page.status_code", page.status_code)
+        return None
     get_current_height.height = int(page.text)
     return get_current_height.height
 get_current_height.height = None

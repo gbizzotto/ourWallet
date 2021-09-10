@@ -414,11 +414,13 @@ class MainWindow(QMainWindow):
         self.ui.   addOutputPushButton.clicked.connect(self.add_output   )
         self.ui.removeOutputPushButton.clicked.connect(self.del_output   )
         self.ui.     signAllPUshButton.clicked.connect(self.sign_all_mine)
-        self.ui.      verifyPushButton.clicked.connect(self.verify_all   )
+        self.ui.      verifyPushButton.clicked.connect(self.verify       )
         self.ui.      exportPushButton.clicked.connect(self.export       )
         self.ui.            signButton.clicked.connect(self.sign_selected)
         self.ui.   broadcastPushButton.clicked.connect(self.broadcast    )
         self.ui.           clearButton.clicked.connect(self.clear        )
+
+        self.ui.broadcastPushButton.setEnabled(False)
 
         utxoTable = self.ui.UTXOsTableWidget
         utxo_columns_titles = ["Signed", "sequence", "amount", "wallet", "confirmations", "derivation", "address"]
@@ -429,6 +431,8 @@ class MainWindow(QMainWindow):
         outputs_columns_titles = ["Amount", "Address", "ScriptPubKey type"]
         outputsTable.setColumnCount(len(outputs_columns_titles))
         outputsTable.setHorizontalHeaderLabels(outputs_columns_titles)
+
+        utxoTable.cellChanged.connect(self.input_changed)
         outputsTable.cellChanged.connect(self.output_changed)
 
         self.wallets = {}
@@ -451,17 +455,30 @@ class MainWindow(QMainWindow):
     def export(self):
         print("serialized transaction", self.transaction.to_bin().hex())
 
+    def verify_one(self, vin):
+        verification = self.transaction.verify(vin)
+        if verification is None:
+            msg = ""
+            good = False
+        elif verification == True:
+            msg = "Yes"
+            good = True
+        else:
+            msg = "ERROR"
+            good = False
+        self.ui.UTXOsTableWidget.setItem(vin, 0, QTableWidgetItem(msg))
+        self.ui.UTXOsTableWidget.item(vin, 0).setFlags(Qt.ItemIsEditable)
+        return good
+
     def verify_all(self):
+        saul_goodman = True
         for vin in range(0, len(self.transaction.inputs)):
-            verification = self.transaction.verify(vin)
-            if verification is None:
-                msg = ""
-            elif verification == True:
-                msg = "Yes"
-            else:
-                msg = "ERROR"
-            self.ui.UTXOsTableWidget.setItem(vin, 0, QTableWidgetItem(msg))
-            self.ui.UTXOsTableWidget.item(vin, 0).setFlags(Qt.ItemIsEditable)
+            saul_goodman = saul_goodman & self.verify_one(vin)
+        return saul_goodman
+
+    def verify(self):
+        if self.verify_all():
+            self.ui.broadcastPushButton.setEnabled(True)
 
     def sign_selected(self):
         utxoTable = self.ui.UTXOsTableWidget
@@ -475,12 +492,22 @@ class MainWindow(QMainWindow):
                     self.transaction.sign_one(transactions.SIGHASH_ALL, vin, private_key=dialog.key)
                 else:
                     print("No key for input")
+            self.verify_one(vin)
 
-        self.verify_all()
+        self.ui.broadcastPushButton.setEnabled(False)
 
     def sign_all_mine(self):
         self.transaction.sign_all(self.wallets, transactions.SIGHASH_ALL)
         self.verify_all()
+
+    def input_changed(self, row, col):
+        utxosTable = self.ui.UTXOsTableWidget
+        if col != 1:
+            return
+        sequence = int(utxosTable.item(row, col).text())
+        self.transaction.inputs[row].sequence = sequence
+
+        self.ui.broadcastPushButton.setEnabled(False)
 
     def output_changed(self, row, col):
         outputsTable = self.ui.outputsTableWidget
@@ -540,11 +567,13 @@ class MainWindow(QMainWindow):
             outputsTable.setItem(row, 2, QTableWidgetItem(scheme))
         else:
             pass
+        self.ui.broadcastPushButton.setEnabled(False)
 
     def add_output(self):
         outputTable = self.ui.outputsTableWidget
         outputTable.insertRow(outputTable.rowCount())
         self.transaction.outputs.append(transactions.TxOutput())
+        self.ui.broadcastPushButton.setEnabled(False)
 
     def del_output(self):
         outputsTable = self.ui.outputsTableWidget
@@ -554,6 +583,7 @@ class MainWindow(QMainWindow):
             outputsTable.removeRow(idx)
             del self.transaction.outputs[idx]
         self.update_fee()
+        self.ui.broadcastPushButton.setEnabled(False)
 
     def add_utxos(self):
         j = json.dumps(util.to_dict(self.wallets))
@@ -588,6 +618,7 @@ class MainWindow(QMainWindow):
 
             utxoTable.resizeColumnsToContents()
             self.update_fee()
+            self.ui.broadcastPushButton.setEnabled(False)
 
     def del_utxos(self):
         utxoTable = self.ui.UTXOsTableWidget
@@ -597,7 +628,7 @@ class MainWindow(QMainWindow):
             utxoTable.removeRow(idx)
             del self.transaction.inputs[idx]
         self.update_fee()
-
+        self.ui.broadcastPushButton.setEnabled(False)
 
     def update_fee(self):
         input_total = sum([utxo.txoutput.amount for utxo in self.transaction.inputs])
