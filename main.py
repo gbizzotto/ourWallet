@@ -417,6 +417,8 @@ class MainWindow(QMainWindow):
         self.ui.      verifyPushButton.clicked.connect(self.verify_all   )
         self.ui.      exportPushButton.clicked.connect(self.export       )
         self.ui.            signButton.clicked.connect(self.sign_selected)
+        self.ui.   broadcastPushButton.clicked.connect(self.broadcast    )
+        self.ui.           clearButton.clicked.connect(self.clear        )
 
         utxoTable = self.ui.UTXOsTableWidget
         utxo_columns_titles = ["Signed", "sequence", "amount", "wallet", "confirmations", "derivation", "address"]
@@ -459,6 +461,7 @@ class MainWindow(QMainWindow):
             else:
                 msg = "ERROR"
             self.ui.UTXOsTableWidget.setItem(vin, 0, QTableWidgetItem(msg))
+            self.ui.UTXOsTableWidget.item(vin, 0).setFlags(Qt.ItemIsEditable)
 
     def sign_selected(self):
         utxoTable = self.ui.UTXOsTableWidget
@@ -566,7 +569,8 @@ class MainWindow(QMainWindow):
 
                 assert vin == utxoTable.rowCount()
                 utxoTable.insertRow(vin)
-                utxoTable.setItem(vin, 1, QTableWidgetItem(str(input.sequence)));
+                utxoTable.setItem(vin, 0, QTableWidgetItem(""))
+                utxoTable.setItem(vin, 1, QTableWidgetItem(str(input.sequence)))
                 utxoTable.setItem(vin, 2, QTableWidgetItem(str(utxo.amount)))
                 utxoTable.setItem(vin, 3, QTableWidgetItem(utxo.metadata.wallet_name))
                 if utxo.parent_tx.metadata.height:
@@ -575,6 +579,12 @@ class MainWindow(QMainWindow):
                     utxoTable.setItem(vin, 4, QTableWidgetItem("Unconfirmed"))
                 utxoTable.setItem(vin, 5, QTableWidgetItem(utxo.metadata.derivation))
                 utxoTable.setItem(vin, 6, QTableWidgetItem(utxo.metadata.address))
+                utxoTable.item(vin, 0).setFlags(Qt.ItemIsEditable)
+                utxoTable.item(vin, 2).setFlags(Qt.ItemIsEditable)
+                utxoTable.item(vin, 3).setFlags(Qt.ItemIsEditable)
+                utxoTable.item(vin, 4).setFlags(Qt.ItemIsEditable)
+                utxoTable.item(vin, 5).setFlags(Qt.ItemIsEditable)
+                utxoTable.item(vin, 6).setFlags(Qt.ItemIsEditable)
 
             utxoTable.resizeColumnsToContents()
             self.update_fee()
@@ -633,6 +643,17 @@ class MainWindow(QMainWindow):
         dialog = WalletInfoDialog(self.wallets[name])
         if dialog.exec():
             pass
+
+    def broadcast(self):
+        txid_hex = explorer.go_push_transaction(self.transaction, testnet)
+        if txid_hex is not None:
+            print("Broadcast OK", txid_hex)
+
+    def clear(self):
+        self.transaction = transactions.Transaction()
+        self.ui.UTXOsTableWidget.setRowCount(0)
+        self.ui.outputsTableWidget.setRowCount(0)
+        self.update_fee()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

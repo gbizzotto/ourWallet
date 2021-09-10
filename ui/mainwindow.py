@@ -73,7 +73,6 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.UTXOsTableWidget.sizePolicy().hasHeightForWidth())
         self.UTXOsTableWidget.setSizePolicy(sizePolicy)
         self.UTXOsTableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
-        self.UTXOsTableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.UTXOsTableWidget.setAlternatingRowColors(True)
         self.UTXOsTableWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         self.UTXOsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -340,6 +339,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.broadcastPushButton)
 
+        self.clearButton = QPushButton(self.centralwidget)
+        self.clearButton.setObjectName(u"clearButton")
+
+        self.horizontalLayout_3.addWidget(self.clearButton)
+
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_3)
 
@@ -414,6 +418,7 @@ class Ui_MainWindow(object):
         self.verifyPushButton.setText(QCoreApplication.translate("MainWindow", u"Verify", None))
         self.exportPushButton.setText(QCoreApplication.translate("MainWindow", u"Export", None))
         self.broadcastPushButton.setText(QCoreApplication.translate("MainWindow", u"Broadcast", None))
+        self.clearButton.setText(QCoreApplication.translate("MainWindow", u"Clear", None))
         self.menuTX.setTitle(QCoreApplication.translate("MainWindow", u"TX", None))
         self.menuWallets.setTitle(QCoreApplication.translate("MainWindow", u"Wallets", None))
         self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))

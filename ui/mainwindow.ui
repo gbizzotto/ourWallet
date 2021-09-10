@@ -64,9 +64,6 @@
              <property name="sizeAdjustPolicy">
               <enum>QAbstractScrollArea::AdjustIgnored</enum>
              </property>
-             <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
-             </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
@@ -436,6 +433,13 @@
          <widget class="QPushButton" name="broadcastPushButton">
           <property name="text">
            <string>Broadcast</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="clearButton">
+          <property name="text">
+           <string>Clear</string>
           </property>
          </widget>
         </item>

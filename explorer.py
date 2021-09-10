@@ -13,6 +13,30 @@ cache_folder = './cache/'
 if not os.path.exists(cache_folder):
     os.makedirs(cache_folder)
 
+def go_push_transaction(tx, testnet):
+    tx_hex = tx.to_bin().hex()
+
+    print("explorer broadcast", tx_hex)
+
+    #blockstream
+    network = "testnet/" if testnet else ""
+    page = requests.post("https://blockstream.info/"+network+"api/tx", data=tx_hex)
+    if page.status_code != 200:
+        print("page.status_code", page.status_code)
+        return None
+    txid = page.text
+    print("txid", txid)
+
+    # add it to the local cache
+    get_transaction(binascii.unhexlify(txid), testnet)
+
+    # write tx to list of our own
+    # TODO evaluate privacy concerns around this
+    with open(cache_folder+"ourTransactions", "a") as f:
+        f.write(txhex+"\n")
+
+    return txid
+
 def go_get_transaction_metadata(txid, testnet):
     print("explorer go_get_transaction_metadata", txid.hex(), testnet)
 
