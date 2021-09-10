@@ -588,6 +588,7 @@ class MainWindow(QMainWindow):
             del self.transaction.inputs[idx]
         self.update_fee()
 
+
     def update_fee(self):
         input_total = sum([utxo.txoutput.amount for utxo in self.transaction.inputs])
         output_total = sum([out.amount for out in self.transaction.outputs])

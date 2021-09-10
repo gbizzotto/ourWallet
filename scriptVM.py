@@ -160,10 +160,10 @@ class RunnerVM:
                     del stack[-1]
                     signature = stack[-1]
                     del stack[-1]
-                    sighash = signature[-1]
+                    sighash_type = signature[-1]
                     signature = signature[:-1]
-                    preimage = tx.get_binary_for_legacy_signature(vin, sighash)
-                    # append 4 bytes of sighash
+                    preimage = tx.get_binary_for_signature(vin, sighash_type)
+                    # append 4 bytes of sighash_type
                     data_to_sign = hashlib.sha256(preimage).digest()
                     vk = ecdsa.VerifyingKey.from_string(pubkey, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
                     try:

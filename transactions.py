@@ -147,6 +147,10 @@ class TxOutput:
             c.txid = binascii.unhexlify(c.txid)
             return c
 
+    def __init__(self):
+        self.amount = 0
+        self.scriptpubkey = bytearray()
+
     def to_dict(self):
         d = deepcopy(self.__dict__)
         if "parent_tx" in d:
@@ -356,7 +360,7 @@ class Transaction:
         stream.write_int(4, hashtype)
         return preimage
 
-    def get_binary_for_legacy_signature(self, vin, sighash):
+    def get_binary_for_legacy_signature(self, vin, sighash_type):
         tx_copy = deepcopy(self)
 
         if tx_copy.inputs[vin].txoutput is None:
@@ -368,15 +372,15 @@ class Transaction:
             input.scriptsig = b'\x00'
         tx_copy.inputs[vin].scriptsig = subscript
 
-        if sighash&3 == SIGHASH_ALL:
+        if sighash_type&3 == SIGHASH_ALL:
             pass
-        elif sighash&3 == SIGHASH_NONE:
+        elif sighash_type&3 == SIGHASH_NONE:
             tx_copy.outputs = []
             for i in range(0,vin):
                 tx_copy.inputs[i].sequence = 0
             for i in range(vin+1,len(tx_copy.inputs)):
                 tx_copy.inputs[i].sequence = 0
-        elif sighash&3 == SIGHASH_SINGLE:
+        elif sighash_type&3 == SIGHASH_SINGLE:
             tx_copy.outputs = tx_copy.outputs[0:vin+1]
             for output in tx_copy.outputs[0:-1]:
                 output.amount = -1
@@ -385,19 +389,55 @@ class Transaction:
                 tx_copy.inputs[i].sequence = 0
             for i in range(vin+1,len(tx_copy.inputs)):
                 tx_copy.inputs[i].sequence = 0
-        if sighash&0x80 == SIGHASH_ANYONECANPAY:
+        if sighash_type&0x80 == SIGHASH_ANYONECANPAY:
             tx_copy.inputs = [tx_copy.inputs[vin]]
 
         tx_bin = tx_copy.to_bin()
-        tx_bin.append(sighash)
+        tx_bin.append(sighash_type)
         tx_bin += b"\x00\x00\x00"
         return tx_bin
+
+    def get_binary_for_signature(self, vin, sighash_type):
+        input = self.inputs[vin]
+        utxo = input.txoutput
+        script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
+        if script_type == scriptVM.P2PKH:
+            return self.get_binary_for_legacy_signature(vin, sighash_type)
+        elif script_type == scriptVM.P2WPKH:
+            return self.get_binary_for_segwit_signature(vin, sighash_type)
+        else:
+            print("I do not know how to serialize the transaction for this type of script")
+            raise
 
     def verify(self, vin):
         if vin >= len(self.inputs):
             return None
         input = self.inputs[vin]
-        full_script = input.scriptsig + input.txoutput.scriptpubkey
+        script_type = scriptVM.identify_scriptpubkey( input.txoutput.scriptpubkey)
+
+        if script_type == scriptVM.P2PK:
+            full_script = input.scriptsig + input.txoutput.scriptpubkey
+        elif script_type == scriptVM.P2SH:
+            return False
+        elif script_type == scriptVM.P2MS:
+            return False
+        elif script_type == scriptVM.P2PKH:
+            full_script = input.scriptsig + input.txoutput.scriptpubkey
+        elif script_type == scriptVM.P2WPKH:
+            witness = bytearray()
+            stream = scriptVM.ScriptByteStream(witness)
+            for item in self.witnesses[vin]:
+                stream.add_chunk(item)
+            full_script = witness + input.scriptsig + bytearray([0x76,0xa9]) + self.inputs[vin].txoutput.scriptpubkey[1:] + bytearray([0x88, 0xac])
+            scriptVM.PrinterVM.run(full_script)
+        elif script_type == scriptVM.P2WSH:
+            return False
+        elif script_type == scriptVM.P2TR:
+            return False
+        else:
+            return False
+
+        print(scriptVM.RunnerVM.run(self, vin, full_script))
         return scriptVM.RunnerVM.run(self, vin, full_script)
 
     def sign_one(self, sighash_type, vin, wallets=None, private_key=None):
@@ -419,26 +459,17 @@ class Transaction:
             pubkey = sk.verifying_key.to_string("compressed")
 
         script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
+        preimage = self.get_binary_for_signature(vin, sighash_type)
+        signature = sign(preimage, private_key) + bytes([sighash_type])
         if script_type == scriptVM.P2PKH:
-            preimage = self.get_binary_for_legacy_signature(vin, sighash_type)
-            signature = sign(preimage, private_key) + bytes([sighash_type])
-
-            scriptsig = bytearray()
-            stream = scriptVM.ScriptByteStream(scriptsig)
+            input.scriptsig = bytearray()
+            stream = scriptVM.ScriptByteStream(input.scriptsig)
             stream.add_chunk(signature)
             stream.add_chunk(pubkey)
-
-            input.scriptsig = scriptsig
-
         elif script_type == scriptVM.P2WPKH:
-            preimage = self.get_binary_for_segwit_signature(vin, sighash_type)
-            signature = sign(preimage, private_key) + bytes([sighash_type])
-
             witness = [signature, pubkey]
-
             input.scriptsig = bytearray() # empty
             self.witnesses[vin] = witness
-
         else:
             print("Unknown scriptpubkey")
 
