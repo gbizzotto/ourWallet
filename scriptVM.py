@@ -126,60 +126,63 @@ class RunnerVM:
     def run(cls, tx, vin, full_script, debug=False):
         stream = ScriptByteStream(full_script)
         stack = []
-        while not stream.eof():
+        try:
+            while not stream.eof():
+                if debug:
+                    cls.print_stack(stack)
+                op = stream.next()
+                if debug:
+                    print("op:", PrinterVM.to_string(op))
+                if isinstance(op, bytes):
+                    stack.append(op)
+                elif op == cls.OP_FALSE:
+                    stack.append(0)
+                elif op == cls.OP_TRUE:
+                    stack.append(1)
+                elif op >= 82 and op <= 92:
+                    stack.append(op-80)
+                elif op == 80:
+                    raise InvalidOpcode(op)
+                elif op == cls.OP_DUP:
+                    stack.append(stack[-1])
+                elif op == cls.OP_HASH160:
+                    ok = hashlib.sha256(stack[-1]).digest()
+                    hash = hashlib.new('ripemd160', ok).digest()
+                    del stack[-1]
+                    stack.append(hash)
+                elif op == cls.OP_EQUALVERIFY:
+                    if stack[-1] != stack[-2]:
+                        return False
+                    del stack[-1]
+                    del stack[-1]
+                elif op == cls.OP_CHECKSIG:
+                    pubkey = stack[-1]
+                    del stack[-1]
+                    signature = stack[-1]
+                    del stack[-1]
+                    sighash = signature[-1]
+                    signature = signature[:-1]
+                    preimage = tx.get_binary_for_legacy_signature(vin, sighash)
+                    # append 4 bytes of sighash
+                    data_to_sign = hashlib.sha256(preimage).digest()
+                    vk = ecdsa.VerifyingKey.from_string(pubkey, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
+                    try:
+                        if vk.verify(signature, data_to_sign, hashlib.sha256, sigdecode=ecdsa.util.sigdecode_der):
+                            stack.append(1)
+                        else:
+                            stack.append(0)
+                    except:
+    
+                        stack.append(0)
+                else:
+                    raise NotImplementedError(PrinterVM.to_string(op))
             if debug:
                 cls.print_stack(stack)
-            op = stream.next()
-            if debug:
-                print("op:", PrinterVM.to_string(op))
-            if isinstance(op, bytes):
-                stack.append(op)
-            elif op == cls.OP_FALSE:
-                stack.append(0)
-            elif op == cls.OP_TRUE:
-                stack.append(1)
-            elif op >= 82 and op <= 92:
-                stack.append(op-80)
-            elif op == 80:
-                raise InvalidOpcode(op)
-            elif op == cls.OP_DUP:
-                stack.append(stack[-1])
-            elif op == cls.OP_HASH160:
-                ok = hashlib.sha256(stack[-1]).digest()
-                hash = hashlib.new('ripemd160', ok).digest()
-                del stack[-1]
-                stack.append(hash)
-            elif op == cls.OP_EQUALVERIFY:
-                if stack[-1] != stack[-2]:
-                    return False
-                del stack[-1]
-                del stack[-1]
-            elif op == cls.OP_CHECKSIG:
-                pubkey = stack[-1]
-                del stack[-1]
-                signature = stack[-1]
-                del stack[-1]
-                sighash = signature[-1]
-                signature = signature[:-1]
-                preimage = tx.get_binary_for_legacy_signature(vin, sighash)
-                # append 4 bytes of sighash
-                data_to_sign = hashlib.sha256(preimage).digest()
-                vk = ecdsa.VerifyingKey.from_string(pubkey, curve=ecdsa.SECP256k1, hashfunc=hashlib.sha256)
-                try:
-                    if vk.verify(signature, data_to_sign, hashlib.sha256, sigdecode=ecdsa.util.sigdecode_der):
-                        stack.append(1)
-                    else:
-                        stack.append(0)
-                except:
-
-                    stack.append(0)
-            else:
-                raise NotImplementedError(PrinterVM.to_string(op))
-        if debug:
-            cls.print_stack(stack)
-        if len(stack) == 0 or stack[-1] == 0:
+            if len(stack) == 0 or stack[-1] == 0:
+                return False
+            return True
+        except:
             return False
-        return True
 
     @classmethod
     def print_stack(cls, stack):

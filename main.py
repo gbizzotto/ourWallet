@@ -255,13 +255,41 @@ class AddWalletFromXprvDialog(QDialog):
         super(AddWalletFromXprvDialog, self).accept()
 
 class PKeyDialog(QDialog):
-    def __init__(self):
+    def __init__(self, transaction, vin):
         super(PKeyDialog, self).__init__()
         self.ui = Ui_PKeyDialog()
         self.ui.setupUi(self)
         self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
         self.ui.pkLineEdit.textChanged.connect(self.checks)
         self.key = None
+
+        current_height = explorer.get_current_height(testnet)
+
+        outpoint_str = transaction.inputs[vin].txoutput.metadata.txid.hex() + ":" + str(transaction.inputs[vin].txoutput.metadata.vout)
+        height = 1 + current_height - transaction.inputs[vin].txoutput.parent_tx.metadata.height
+        script_type = scriptVM.identify_scriptpubkey(transaction.inputs[vin].txoutput.scriptpubkey)
+        if script_type == scriptVM.P2PK:
+            script_type_str = "P2PK"
+        elif script_type == scriptVM.P2SH:
+            script_type_str = "P2SH"
+        elif script_type == scriptVM.P2MS:
+            script_type_str = "P2MS"
+        elif script_type == scriptVM.P2PKH:
+            script_type_str = "P2PKH"
+        elif script_type == scriptVM.P2WPKH:
+            script_type_str = "P2WPKH"
+        elif script_type == scriptVM.P2WSH:
+            script_type_str = "P2WSH"
+        elif script_type == scriptVM.P2TR:
+            script_type_str = "P2TR"
+        else:
+            script_type_str = "UNKNOWN YET"
+
+        self.ui.     outpointLabel.setText(outpoint_str)
+        self.ui.confirmationsLabel.setText(str(height))
+        self.ui.   scriptTypeLabel.setText(script_type_str)
+        self.ui.          vinLabel.setText(str(vin))
+        self.ui.       amountLabel.setText(str(transaction.inputs[vin].txoutput.amount))
     def checks(self):
         errors = []
         if len(self.ui.pkLineEdit.text()) == 0:
@@ -438,7 +466,7 @@ class MainWindow(QMainWindow):
 
         for vin in selected_indexes:
             if False == self.transaction.sign_one(transactions.SIGHASH_ALL, vin, wallets=self.wallets):
-                dialog = PKeyDialog()
+                dialog = PKeyDialog(self.transaction, vin)
                 if dialog.exec():
                     print(dialog.key.hex())
                     self.transaction.sign_one(transactions.SIGHASH_ALL, vin, private_key=dialog.key)

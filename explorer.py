@@ -37,7 +37,7 @@ def get_transaction_metadata(txid, testnet):
             with open(cache_folder+"txsmd.cache", "r") as f:
                 get_transaction_metadata.cache = json.loads(f.read())
 
-    if txid.hex() in get_transaction_metadata.cache:
+    if txid.hex() in get_transaction_metadata.cache and get_transaction_metadata.cache[txid.hex()]["height"] is not None:
         md = transactions.Transaction.Metadata()
         md.__dict__ = copy.copy(get_transaction_metadata.cache[txid.hex()])
     else:
