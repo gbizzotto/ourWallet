@@ -67,6 +67,20 @@ def set_qr_label(label, text):
     qt_pixmap.loadFromData(buf.getvalue(), "PNG")
     label.setPixmap(qt_pixmap.scaled(label.width(), label.height(), Qt.KeepAspectRatio))
 
+def save(wallet, parent_dialog):
+    filename = wallet.filename
+    if filename is None:
+        filename = QFileDialog.getSaveFileName(parent_dialog, 'Save wallet ' + wallet.name + ' to file', filter="Wallet files(*.wlt);;All files(*)")[0]
+        if len(filename) == 0:
+            return
+        if '.' not in filename:
+            filename += ".wlt"
+    j = json.dumps(wallet.to_dict())
+    bin = ourCrypto.encrypt(j, b"ourPassword")
+    file = open(filename, 'wb')
+    file.write(bin)
+    wallet.filename = filename
+    wallet.dirty    = False
 
 class WalletInfoDialog(QDialog):
     def __init__(self, wallet):
@@ -182,19 +196,7 @@ class WalletInfoDialog(QDialog):
             self.display_utxos(utxos)
 
     def save(self):
-        filename = self.wallet.filename
-        if filename is None:
-            filename = QFileDialog.getSaveFileName(self, 'Save wallet to file', filter="Wallet files(*.wlt);;All files(*)")[0]
-            if len(filename) == 0:
-                return
-            if '.' not in filename:
-                filename += ".wlt"
-        j = json.dumps(self.wallet.to_dict())
-        bin = ourCrypto.encrypt(j, b"ourPassword")
-        file = open(filename, 'wb')
-        file.write(bin)
-        self.wallet.filename = filename
-        self.wallet.dirty    = False
+        save(self.wallet, self)
 
 class AddWalletFromWordsDialog(QDialog):
     def __init__(self):
@@ -442,12 +444,17 @@ class MainWindow(QMainWindow):
         msg = []
         for w in self.wallets.values():
             if w.dirty or w.filename is None:
-                msg.append(w.name + " needs Jesus, exit without saving it?")
+                msg.append(w.name + " needs Jesus, save it?")
 
         if len(msg) == 0:
             event.accept()
             return
-        if QMessageBox.Yes == QMessageBox.question(self, "Confirm Exit...", '\n'.join(msg), QMessageBox.Yes| QMessageBox.No):
+        action = QMessageBox.question(self, "Save?", '\n'.join(msg), QMessageBox.Yes| QMessageBox.No| QMessageBox.Cancel)
+        if action == QMessageBox.Yes:
+            for w in self.wallets.values():
+                if w.dirty or w.filename is None:
+                    save(w, self)
+        if action == QMessageBox.No:
             event.accept()
         else:
             event.ignore()
