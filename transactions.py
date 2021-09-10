@@ -417,7 +417,6 @@ class Transaction:
         else:
             sk = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1)
             pubkey = sk.verifying_key.to_string("compressed")
-            print("pubkey", pubkey.hex())
 
         script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
         if script_type == scriptVM.P2PKH:

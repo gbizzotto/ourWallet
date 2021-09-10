@@ -267,12 +267,11 @@ class PKeyDialog(QDialog):
         if len(self.ui.pkLineEdit.text()) == 0:
             self.key = None
             self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+            self.ui.warningLabel.setText("")
             return
         pk_text = self.ui.pkLineEdit.text()
         try:
             pk = Base58.check_decode(pk_text)
-            if pk[-1] != 0x01:
-                errors.append("Key not compressed, boo!")
             if (pk[0] == 0x80 and testnet):
                 errors.append("Key not for testnet")
             elif (pk[0] == 0xef and not testnet):
@@ -280,7 +279,9 @@ class PKeyDialog(QDialog):
             self.key = pk[1:-1]
         except:
             try:
-                self.pk = binascii.unhexlify(pk_text)
+                pk = binascii.unhexlify(pk_text)
+                sk = ecdsa.SigningKey.from_string(pk[1:-1], curve=ecdsa.SECP256k1)
+                self.pk = pk
             except:
                 errors.append("Bad format")
 
