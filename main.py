@@ -43,6 +43,7 @@ from ui.addwalletfromwordsdialog import Ui_AddWalletFromWordsDialog
 from ui.addwalletfromxprvdialog  import Ui_AddWalletFromXprvDialog
 from ui.walletinfo import Ui_walletInfoDialog
 from ui.chooseutxosdialog import Ui_ChooseUTXOsDialog
+from ui.privatekeydialog import Ui_PKeyDialog
 
 import explorer
 import transactions
@@ -253,6 +254,44 @@ class AddWalletFromXprvDialog(QDialog):
         self.wallet = wallets.ExtendedKeyWallet(self.ui.nameLineEdit.text(), self.ui.xprvPlainTextEdit.toPlainText())
         super(AddWalletFromXprvDialog, self).accept()
 
+class PKeyDialog(QDialog):
+    def __init__(self):
+        super(PKeyDialog, self).__init__()
+        self.ui = Ui_PKeyDialog()
+        self.ui.setupUi(self)
+        self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+        self.ui.pkLineEdit.textChanged.connect(self.checks)
+        self.key = None
+    def checks(self):
+        errors = []
+        if len(self.ui.pkLineEdit.text()) == 0:
+            self.key = None
+            self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+            return
+        pk_text = self.ui.pkLineEdit.text()
+        try:
+            pk = Base58.check_decode(pk_text)
+            if pk[-1] != 0x01:
+                errors.append("Key not compressed, boo!")
+            if (pk[0] == 0x80 and testnet):
+                errors.append("Key not for testnet")
+            elif (pk[0] == 0xef and not testnet):
+                errors.append("Key not for mainnet")
+            self.key = pk[1:-1]
+        except:
+            try:
+                self.pk = binascii.unhexlify(pk_text)
+            except:
+                errors.append("Bad format")
+
+        self.ui.warningLabel.setText("; ".join(errors))
+        self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(len(errors) == 0)
+        return len(errors) == 0
+    def accept(self):
+        if not self.checks():
+            return
+        super(PKeyDialog, self).accept()
+
 class ChooseUTXOsDialog(QDialog):
     def __init__(self, ws):
         super(ChooseUTXOsDialog, self).__init__()
@@ -327,6 +366,7 @@ class ChooseUTXOsDialog(QDialog):
         utxoTable.insertRow(row_idx)
         utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(utxo.amount)))
         if utxo.parent_tx.metadata.height:
+            current_height = explorer.get_current_height(testnet)
             utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
         else:
             utxoTable.setItem(row_idx, 1, QTableWidgetItem("Unconfirmed"))
@@ -347,6 +387,7 @@ class MainWindow(QMainWindow):
         self.ui.     signAllPUshButton.clicked.connect(self.sign_all_mine)
         self.ui.      verifyPushButton.clicked.connect(self.verify_all   )
         self.ui.      exportPushButton.clicked.connect(self.export       )
+        self.ui.            signButton.clicked.connect(self.sign_selected)
 
         utxoTable = self.ui.UTXOsTableWidget
         utxo_columns_titles = ["Signed", "sequence", "amount", "wallet", "confirmations", "derivation", "address"]
@@ -387,8 +428,23 @@ class MainWindow(QMainWindow):
             elif verification == True:
                 msg = "Yes"
             else:
-                msg = "No"
+                msg = "ERROR"
             self.ui.UTXOsTableWidget.setItem(vin, 0, QTableWidgetItem(msg))
+
+    def sign_selected(self):
+        utxoTable = self.ui.UTXOsTableWidget
+        selected_indexes = set([x.row() for x in utxoTable.selectedIndexes()])
+
+        for vin in selected_indexes:
+            if False == self.transaction.sign_one(transactions.SIGHASH_ALL, vin, wallets=self.wallets):
+                dialog = PKeyDialog()
+                if dialog.exec():
+                    print(dialog.key.hex())
+                    self.transaction.sign_one(transactions.SIGHASH_ALL, vin, private_key=dialog.key)
+                else:
+                    print("No key for input")
+
+        self.verify_all()
 
     def sign_all_mine(self):
         self.transaction.sign_all(self.wallets, transactions.SIGHASH_ALL)

@@ -52,6 +52,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_11.addWidget(self.addUTXOsPushButton)
 
+        self.signButton = QPushButton(self.UTXOsGroupBox)
+        self.signButton.setObjectName(u"signButton")
+
+        self.horizontalLayout_11.addWidget(self.signButton)
+
         self.removeUTXOButton = QPushButton(self.UTXOsGroupBox)
         self.removeUTXOButton.setObjectName(u"removeUTXOButton")
 
@@ -384,6 +389,7 @@ class Ui_MainWindow(object):
         self.actionOpen.setText(QCoreApplication.translate("MainWindow", u"Open...", None))
         self.UTXOsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"UTXOs", None))
         self.addUTXOsPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
+        self.signButton.setText(QCoreApplication.translate("MainWindow", u"Sign selected", None))
         self.removeUTXOButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
         self.outputsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"Outputs", None))
         self.addOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))

@@ -400,41 +400,54 @@ class Transaction:
         full_script = input.scriptsig + input.txoutput.scriptpubkey
         return scriptVM.RunnerVM.run(self, vin, full_script)
 
-    def sign_all(self, wallets, sighash_type):
-        for vin, input in enumerate(self.inputs):
-            utxo = input.txoutput
+    def sign_one(self, sighash_type, vin, wallets=None, private_key=None):
+        input = self.inputs[vin]
+        utxo = input.txoutput
+        if private_key is None and wallets is None:
+            return
+        if wallets is not None:
+            if utxo.metadata.wallet_name is None:
+                return False
             wallet = wallets[utxo.metadata.wallet_name]
-            script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
-            if script_type == scriptVM.P2PKH:
-                preimage = self.get_binary_for_legacy_signature(vin, sighash_type)
+            if wallet is None:
+                return False
+            derivation = utxo.metadata.derivation
+            private_key = wallet.privkey(derivation)
+            pubkey = wallet.pubkey(derivation)
+        else:
+            sk = ecdsa.SigningKey.from_string(private_key, curve=ecdsa.SECP256k1)
+            pubkey = sk.verifying_key.to_string("compressed")
+            print("pubkey", pubkey.hex())
 
-                derivation = utxo.metadata.derivation
-                private_key = wallet.privkey(derivation)
+        script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
+        if script_type == scriptVM.P2PKH:
+            preimage = self.get_binary_for_legacy_signature(vin, sighash_type)
+            signature = sign(preimage, private_key) + bytes([sighash_type])
 
-                signature = sign(preimage, private_key) + bytes([sighash_type])
+            scriptsig = bytearray()
+            stream = scriptVM.ScriptByteStream(scriptsig)
+            stream.add_chunk(signature)
+            stream.add_chunk(pubkey)
 
-                pubkey = wallet.pubkey(derivation)
-                scriptsig = bytearray()
-                stream = scriptVM.ScriptByteStream(scriptsig)
-                stream.add_chunk(signature)
-                stream.add_chunk(pubkey)
+            input.scriptsig = scriptsig
 
-                input.scriptsig = scriptsig
+        elif script_type == scriptVM.P2WPKH:
+            preimage = self.get_binary_for_segwit_signature(vin, sighash_type)
+            signature = sign(preimage, private_key) + bytes([sighash_type])
 
-            elif script_type == scriptVM.P2WPKH:
-                preimage = self.get_binary_for_segwit_signature(vin, sighash_type)
+            witness = [signature, pubkey]
 
-                derivation = utxo.metadata.derivation
-                private_key = wallet.privkey(derivation)
+            input.scriptsig = bytearray() # empty
+            self.witnesses[vin] = witness
 
-                signature = sign(preimage, private_key) + bytes([sighash_type])
+        else:
+            print("Unknown scriptpubkey")
 
-                pubkey = wallet.pubkey(derivation)
-                witness = [signature, pubkey]
+        return True
 
-                input.scriptsig = bytearray() # empty
-                self.witnesses[vin] = witness
-
+    def sign_all(self, wallets, sighash_type):
+        for vin in range(0, len(self.inputs)):
+            self.sign_one(sighash_type, vin, wallets=wallets)
 
     def __repr__(self):
         return json.dumps(util.to_dict(self), indent=2)

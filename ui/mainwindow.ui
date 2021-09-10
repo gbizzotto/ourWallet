@@ -38,6 +38,13 @@
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="signButton">
+               <property name="text">
+                <string>Sign selected</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="removeUTXOButton">
                <property name="text">
                 <string>Remove</string>

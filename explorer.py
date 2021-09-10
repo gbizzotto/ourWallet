@@ -93,7 +93,7 @@ get_transaction.bincache = None
 
 
 def is_output_spent(txid, vout, testnet):
-    print("explorer is_output_spent", txid, vout)
+    print("explorer is_output_spent", txid.hex(), vout)
 
     # blockstream
     network = "testnet/" if testnet else ""
