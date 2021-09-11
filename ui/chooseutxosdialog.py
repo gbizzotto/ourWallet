@@ -33,15 +33,15 @@ class Ui_ChooseUTXOsDialog(object):
 
         self.horizontalLayout_2.addWidget(self.label_2)
 
-        self.comboBox = QComboBox(self.tab)
-        self.comboBox.setObjectName(u"comboBox")
+        self.walletComboBox = QComboBox(self.tab)
+        self.walletComboBox.setObjectName(u"walletComboBox")
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.comboBox.sizePolicy().hasHeightForWidth())
-        self.comboBox.setSizePolicy(sizePolicy)
+        sizePolicy.setHeightForWidth(self.walletComboBox.sizePolicy().hasHeightForWidth())
+        self.walletComboBox.setSizePolicy(sizePolicy)
 
-        self.horizontalLayout_2.addWidget(self.comboBox)
+        self.horizontalLayout_2.addWidget(self.walletComboBox)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_2)

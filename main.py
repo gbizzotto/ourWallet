@@ -347,22 +347,41 @@ class ChooseUTXOsDialog(QDialog):
         ffutxoTable.setColumnCount(len(ffutxo_columns_titles))
         ffutxoTable.setHorizontalHeaderLabels(ffutxo_columns_titles)
 
-        current_height = explorer.get_current_height(testnet)
+        self.ui.walletComboBox.addItem("All")
         for wallet in self.wallets.values():
-            for utxo in wallet.utxos:
-                if utxo.parent_tx is None:
-                    utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
-                self.known_utxos.append(utxo)
-                row_idx = utxoTable.rowCount()
-                utxoTable.insertRow(row_idx)
-                utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(utxo.amount)))
-                utxoTable.setItem(row_idx, 1, QTableWidgetItem(wallet.name))
-                if utxo.parent_tx.metadata.height:
-                    utxoTable.setItem(row_idx, 2, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
-                else:
-                    utxoTable.setItem(row_idx, 2, QTableWidgetItem("Unconfirmed"))
-                utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.derivation))
-                utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.metadata.address))
+            self.ui.walletComboBox.addItem(wallet.name)
+
+        self.ui.walletComboBox.currentIndexChanged.connect(self.wallet_changed)
+        self.populate_utxos()
+
+    def populate_utxos(self):
+        self.ui.UTXOsTableWidget.setRowCount(0)
+        if self.ui.walletComboBox.currentIndex() == 0:
+            for wallet in self.wallets.values():
+                self.populate_utxos_with_wallet(wallet)
+        else:
+            self.populate_utxos_with_wallet(self.wallets[self.ui.walletComboBox.currentText()])
+
+    def populate_utxos_with_wallet(self, wallet):
+        utxoTable = self.ui.UTXOsTableWidget
+        current_height = explorer.get_current_height(testnet)
+        for utxo in wallet.utxos:
+            if utxo.parent_tx is None:
+                utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
+            self.known_utxos.append(utxo)
+            row_idx = utxoTable.rowCount()
+            utxoTable.insertRow(row_idx)
+            utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(utxo.amount)))
+            utxoTable.setItem(row_idx, 1, QTableWidgetItem(wallet.name))
+            if utxo.parent_tx.metadata.height:
+                utxoTable.setItem(row_idx, 2, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
+            else:
+                utxoTable.setItem(row_idx, 2, QTableWidgetItem("Unconfirmed"))
+            utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.derivation))
+            utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.metadata.address))
+
+    def wallet_changed(self):
+        self.populate_utxos()
 
     def dialog_accepted(self):
         if self.ui.tabWidget.currentIndex() == 0:
