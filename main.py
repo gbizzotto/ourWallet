@@ -32,7 +32,7 @@ auto_import("qrcode")
 auto_import("bip39")
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox
-from PySide6.QtCore import QFile, QIODevice, Qt, QSize
+from PySide6.QtCore import QFile, QIODevice, Qt, QSize, QDateTime
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QPixmap, QPalette
 
@@ -174,14 +174,14 @@ class WalletInfoDialog(QDialog):
         utxos = []
         for derivation_pattern in derivation_patterns:
             if 'x' in derivation_pattern:
-                max = 5
+                max = 10
                 i = 0
                 while i < max:
                     derivation = derivation_pattern.replace("x", str(i))
                     address = self.wallet.address(derivation)
                     for utxo in explorer.get_utxos(self.wallet.name, address, derivation, testnet):
                         utxos.append(utxo)
-                        max = i+5
+                        max = i+10
                     i += 1
             else:
                 address = self.wallet.address(derivation_pattern)
@@ -421,6 +421,10 @@ class MainWindow(QMainWindow):
         self.ui.            signButton.clicked.connect(self.sign_selected)
         self.ui.   broadcastPushButton.clicked.connect(self.broadcast    )
         self.ui.           clearButton.clicked.connect(self.clear        )
+        self.ui.PreventFeeSnipingCheckBox.toggled.connect(self.prevent_fee_sniping_toggled)
+        self.ui.locktimeLineEdit.textChanged.connect(self.locktime_changed)
+        self.ui.dateTimeEdit.dateTimeChanged.connect(self.locktime_datetime_changed)
+        self.propagate_locktime_change = True
 
         self.ui.broadcastPushButton.setEnabled(False)
 
@@ -439,6 +443,63 @@ class MainWindow(QMainWindow):
 
         self.wallets = {}
         self.transaction = transactions.Transaction()
+
+        unix_time = int(QDateTime.currentDateTime().toMSecsSinceEpoch()/1000)
+        self.transaction.locktime = unix_time
+        self.ui.locktimeLineEdit.setText(str(unix_time))
+
+    def locktime_datetime_changed(self):
+        if self.propagate_locktime_change == False:
+            return
+
+        unix_time = int(self.ui.dateTimeEdit.dateTime().toMSecsSinceEpoch()/1000)
+        if unix_time <= 500000000:
+            print("Bad dateTime")
+            return
+        self.transaction.locktime = unix_time
+        self.propagate_locktime_change = False
+        self.ui.locktimeLineEdit.setText(str(unix_time))
+        self.propagate_locktime_change = True
+
+    def locktime_changed(self):
+        if self.propagate_locktime_change == False:
+            return
+        if len(self.ui.locktimeLineEdit.text()) == 0:
+            return
+
+        value = int(self.ui.locktimeLineEdit.text())
+        self.transaction.locktime = value
+
+        if value < 500000000:
+            current_height = explorer.get_current_height(testnet)
+            blocks_from_now = value - current_height
+            if testnet:
+                # testnet seems to go way faster than mainnet. this is an attempt to correction
+                blocks_from_now = int(blocks_from_now / 3.752)
+            unix_time = int(QDateTime.currentDateTime().toMSecsSinceEpoch()/1000)
+            unix_time += blocks_from_now * 10 * 60
+        else:
+            unix_time = value
+
+        date_time = QDateTime();
+        date_time.setMSecsSinceEpoch(unix_time*1000);
+
+        self.propagate_locktime_change = False
+        self.ui.dateTimeEdit.setDateTime(date_time)
+        self.propagate_locktime_change = True
+
+        self.ui.broadcastPushButton.setEnabled(False)
+
+    def prevent_fee_sniping_toggled(self):
+        checked = self.ui.PreventFeeSnipingCheckBox.isChecked()
+        self.ui.dateTimeEdit.setEnabled(not checked)
+        self.ui.locktimeLineEdit.setEnabled(not checked)
+
+        if checked:
+            self.transaction.locktime = explorer.get_current_height(testnet)
+        else:
+            self.transaction.locktime = int(self.ui.locktimeLineEdit.text())
+        self.ui.broadcastPushButton.setEnabled(False)
 
     def closeEvent(self,event):
         msg = []

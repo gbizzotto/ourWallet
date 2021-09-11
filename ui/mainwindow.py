@@ -257,6 +257,11 @@ class Ui_MainWindow(object):
 
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName(u"gridLayout")
+        self.label_7 = QLabel(self.centralwidget)
+        self.label_7.setObjectName(u"label_7")
+
+        self.gridLayout.addWidget(self.label_7, 0, 0, 1, 1)
+
         self.widget_2 = QWidget(self.centralwidget)
         self.widget_2.setObjectName(u"widget_2")
         sizePolicy2 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
@@ -267,48 +272,40 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addWidget(self.widget_2, 0, 4, 1, 1)
 
-        self.dateTimeEdit = QDateTimeEdit(self.centralwidget)
-        self.dateTimeEdit.setObjectName(u"dateTimeEdit")
-        sizePolicy3 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.locktimeLineEdit = QLineEdit(self.centralwidget)
+        self.locktimeLineEdit.setObjectName(u"locktimeLineEdit")
+        self.locktimeLineEdit.setEnabled(False)
+        sizePolicy3 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
-        self.dateTimeEdit.setSizePolicy(sizePolicy3)
+        sizePolicy3.setHeightForWidth(self.locktimeLineEdit.sizePolicy().hasHeightForWidth())
+        self.locktimeLineEdit.setSizePolicy(sizePolicy3)
+
+        self.gridLayout.addWidget(self.locktimeLineEdit, 0, 1, 1, 1)
+
+        self.dateTimeEdit = QDateTimeEdit(self.centralwidget)
+        self.dateTimeEdit.setObjectName(u"dateTimeEdit")
+        self.dateTimeEdit.setEnabled(False)
+        sizePolicy4 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
+        self.dateTimeEdit.setSizePolicy(sizePolicy4)
         self.dateTimeEdit.setMinimumSize(QSize(200, 0))
         self.dateTimeEdit.setDateTime(QDateTime(QDate(2033, 5, 18), QTime(3, 40, 0)))
         self.dateTimeEdit.setCalendarPopup(True)
         self.dateTimeEdit.setTimeSpec(Qt.LocalTime)
 
-        self.gridLayout.addWidget(self.dateTimeEdit, 0, 3, 1, 1)
+        self.gridLayout.addWidget(self.dateTimeEdit, 0, 2, 1, 1)
 
-        self.nLockTimeTypeComboBox = QComboBox(self.centralwidget)
-        self.nLockTimeTypeComboBox.setObjectName(u"nLockTimeTypeComboBox")
+        self.PreventFeeSnipingCheckBox = QCheckBox(self.centralwidget)
+        self.PreventFeeSnipingCheckBox.setObjectName(u"PreventFeeSnipingCheckBox")
+        self.PreventFeeSnipingCheckBox.setChecked(True)
 
-        self.gridLayout.addWidget(self.nLockTimeTypeComboBox, 0, 1, 1, 1)
-
-        self.locktimeLineEdit = QLineEdit(self.centralwidget)
-        self.locktimeLineEdit.setObjectName(u"locktimeLineEdit")
-        sizePolicy4 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.locktimeLineEdit.sizePolicy().hasHeightForWidth())
-        self.locktimeLineEdit.setSizePolicy(sizePolicy4)
-
-        self.gridLayout.addWidget(self.locktimeLineEdit, 0, 2, 1, 1)
-
-        self.nLockTimeRadioButton = QRadioButton(self.centralwidget)
-        self.nLockTimeRadioButton.setObjectName(u"nLockTimeRadioButton")
-
-        self.gridLayout.addWidget(self.nLockTimeRadioButton, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.PreventFeeSnipingCheckBox, 0, 3, 1, 1)
 
 
         self.verticalLayout_3.addLayout(self.gridLayout)
-
-        self.PreventFeeSnipingRadioButton = QRadioButton(self.centralwidget)
-        self.PreventFeeSnipingRadioButton.setObjectName(u"PreventFeeSnipingRadioButton")
-        self.PreventFeeSnipingRadioButton.setChecked(True)
-
-        self.verticalLayout_3.addWidget(self.PreventFeeSnipingRadioButton)
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
@@ -410,10 +407,11 @@ class Ui_MainWindow(object):
         self.feeEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"sat/B ~", None))
         self.lineEdit_4.setText(QCoreApplication.translate("MainWindow", u"0", None))
-        self.dateTimeEdit.setDisplayFormat(QCoreApplication.translate("MainWindow", u"yyyy-MM-dd HH:mm zzz", None))
+        self.label_7.setText(QCoreApplication.translate("MainWindow", u"LockTime", None))
+        self.locktimeLineEdit.setInputMask(QCoreApplication.translate("MainWindow", u"000000000000", None))
         self.locktimeLineEdit.setText(QCoreApplication.translate("MainWindow", u"2000000000", None))
-        self.nLockTimeRadioButton.setText(QCoreApplication.translate("MainWindow", u"nLockTime", None))
-        self.PreventFeeSnipingRadioButton.setText(QCoreApplication.translate("MainWindow", u"Prevent fee sniping", None))
+        self.dateTimeEdit.setDisplayFormat(QCoreApplication.translate("MainWindow", u"yyyy-MM-dd HH:mm", None))
+        self.PreventFeeSnipingCheckBox.setText(QCoreApplication.translate("MainWindow", u"Prevent fee sniping", None))
         self.signAllPUshButton.setText(QCoreApplication.translate("MainWindow", u"Sign all mine", None))
         self.verifyPushButton.setText(QCoreApplication.translate("MainWindow", u"Verify", None))
         self.exportPushButton.setText(QCoreApplication.translate("MainWindow", u"Export", None))
