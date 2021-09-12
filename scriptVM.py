@@ -41,6 +41,27 @@ def identify_scriptpubkey(script):
         return P2TR
     return None
 
+def address_is_testnet(address):
+    return address[0] == "m" or address[0] == "n" or address[0] == '2' or address[0:4] == "tb1q" or address[0:4] == "tb1p"
+
+def address_is_mainnet(address):
+    return address[0] == "1" or address[0] == '3' or address[0:4] == "bc1q" or address[0:4] == "bc1p"
+
+def address_type(address):
+    if address[0] == '1' or address[0] == "m" or address[0] == "n":
+        return P2PKH
+    elif address[0] == '3' or address[0] == '2':
+        return P2SH
+    elif address[:4] == 'bc1q' or address[:4] == 'tb1q':
+        return P2WPKH
+    elif address[:4] == 'bc1p' or address[:4] == 'tb1p':
+        return P2TR
+
+def make_P2PKH_scriptpubkey(bin_address):
+    return bytearray([0x76, 0xa9, len(bin_address)]) + bin_address + bytes([0x88, 0xac])
+
+def make_P2PWPKH_scriptpubkey(bin_address):
+    return bytes([0x00, len(bin_address)]) + bin_address
 
 class ScriptByteStream:
     def __init__(self, bytes_buffer):

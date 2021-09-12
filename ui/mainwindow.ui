@@ -77,7 +77,7 @@
               <bool>true</bool>
              </attribute>
              <attribute name="verticalHeaderVisible">
-              <bool>true</bool>
+              <bool>false</bool>
              </attribute>
             </widget>
            </item>
@@ -135,7 +135,7 @@
               <bool>true</bool>
              </attribute>
              <attribute name="verticalHeaderVisible">
-              <bool>true</bool>
+              <bool>false</bool>
              </attribute>
             </widget>
            </item>
@@ -164,7 +164,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_5">
+         <widget class="QLineEdit" name="transactionSizeEdit">
           <property name="text">
            <string>0</string>
           </property>
@@ -205,7 +205,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_6">
+         <widget class="QLineEdit" name="transactionVSizeEdit">
           <property name="text">
            <string>0</string>
           </property>
@@ -299,7 +299,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="lineEdit_4">
+             <widget class="QLineEdit" name="feePerByteEdit">
               <property name="text">
                <string>0</string>
               </property>
@@ -336,7 +336,7 @@
         <item row="0" column="1">
          <widget class="QLineEdit" name="locktimeLineEdit">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -348,14 +348,14 @@
            <string>000000000000</string>
           </property>
           <property name="text">
-           <string>2000000000</string>
+           <string>0</string>
           </property>
          </widget>
         </item>
         <item row="0" column="2">
          <widget class="QDateTimeEdit" name="dateTimeEdit">
           <property name="enabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -396,7 +396,7 @@
            <string>Prevent fee sniping</string>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>

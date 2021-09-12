@@ -52,22 +52,9 @@ class TxByteStream:
     def write_chunk(self, b):
         self.buffer.extend(b)
     def write_int(self, size, value):
-        while size > 0:
-            self.buffer.append(value & 0xFF)
-            value >>= 8
-            size -= 1
+        self.buffer.extend(util.to_bytes(size, value))
     def write_varint(self, value):
-        if value < 0xFD:
-            self.buffer.append(value)
-        elif value <= 0xFFFF:
-            self.write(0xFD)
-            self.write_int(2, value)
-        elif value <= 0xFFFFFFFF:
-            self.write(0xFE)
-            self.write_int(4, value)
-        else:
-            self.write(0xFF)
-            self.write_int(8, value)
+        self.buffer.extend(util.to_varint_bytes(value))
 
 
 class TxInput:
@@ -83,7 +70,8 @@ class TxInput:
         scriptpubkey = self.txoutput.scriptpubkey
         assert scriptpubkey[0] == 0
         assert scriptpubkey[1] == 20
-        return bytearray([0x76,0xa9,0x14]) + scriptpubkey[2:] + bytearray([0x88, 0xac])
+        # TODO how about P2WSH?
+        return scriptVM.make_P2PKH_scriptpubkey(scriptpubkey[2:])
 
     def to_dict(self):
         d = deepcopy(self.__dict__)
@@ -185,7 +173,6 @@ class TxOutput:
 
 class Transaction:
     # self.version    int
-    # self.has_segwit bool
     # self.inputs     TxInput[]
     # self.outputs    TxOutput[]
     # self.witnesses  bytes[]
@@ -200,8 +187,7 @@ class Transaction:
         pass
 
     def __init__(self):
-        self.version = 1
-        self.has_segwit = False
+        self.version = 2
         self.inputs = []
         self.outputs = []
         self.witnesses = []
@@ -220,24 +206,27 @@ class Transaction:
         txin = TxInput()
         txin.txid = utxo.metadata.txid
         txin.vout = utxo.metadata.vout
-        txin.scriptsig = b''
+        txin.scriptsig = bytearray()
         txin.sequence = 0
         txin.parent_tx = self
         txin.txoutput = utxo
         self.inputs.append(txin)
         self.witnesses.append([])
 
-        script_type = scriptVM.identify_scriptpubkey(utxo.scriptpubkey)
-        if script_type in (scriptVM.P2WPKH, scriptVM.P2WSH):
-            self.has_segwit = True
-
         return len(self.inputs) - 1
 
-    def to_bin(self):
+    def has_segwit(self):
+        for input in self.inputs:
+            script_type = scriptVM.identify_scriptpubkey(input.txoutput.scriptpubkey)
+            if script_type in (scriptVM.P2WPKH, scriptVM.P2WSH):
+                return True
+
+    def to_bin(self, with_segwit=True):
         bin = bytearray()
         stream = TxByteStream(bin)
         stream.write_int(4, self.version)
-        if self.has_segwit:
+        has_segwit = self.has_segwit()
+        if has_segwit and with_segwit:
             stream.write(0x00)
             stream.write(0x01)
         stream.write_varint(len(self.inputs))
@@ -247,7 +236,7 @@ class Transaction:
         for output in self.outputs:
             bin.extend(output.to_bin())
 
-        if self.has_segwit:
+        if has_segwit and with_segwit:
             segwit_bin = bytearray()
             segwit_stream = TxByteStream(segwit_bin)
             for entries in self.witnesses:
@@ -260,6 +249,54 @@ class Transaction:
         stream.write_int(4, self.locktime)
         return bin
 
+    def get_approximate_size(self):
+        sig_size = 72
+        key_size = 33
+
+        size = 4
+        size += len(util.to_varint_bytes(len(self.inputs)))
+        for input in self.inputs:
+            size += 32 + 4
+            if len(input.scriptsig) > 0:
+                scriptsig_size = len(input.scriptsig)
+            elif input.txoutput is not None:
+                script_type = scriptVM.identify_scriptpubkey(input.txoutput.scriptpubkey)
+                if script_type == scriptVM.P2PK:
+                    scriptsig_size = sig_size
+                elif script_type == scriptVM.P2PKH:
+                    scriptsig_size = key_size + sig_size + 2
+                elif script_type == scriptVM.P2SH:
+                    scriptsig_size = 1 # can't tell
+                elif script_type == scriptVM.P2MS:
+                    # OP_1 is 81. i guess we won't have a multisig with 0 signatures required...
+                    sig_count = input.txoutput.outputs[input.vout].scriptpubkey[-1] - 80
+                    scriptsig_size = 1 + sig_count * sig_size
+                elif script_type == scriptVM.P2WPKH:
+                    scriptsig_size = 0 # it's in witnesses
+                elif script_type == scriptVM.P2WSH:
+                    scriptsig_size = 0 # it's in witnesses
+                elif script_type == scriptVM.P2TR:
+                    scriptsig_size = 0 # it's in witnesses
+            size += len(util.to_varint_bytes(scriptsig_size))
+            size += scriptsig_size
+            size += 4
+        size += len(util.to_varint_bytes(len(self.outputs)))
+        for output in self.outputs:
+            size += 8
+            if len(output.scriptpubkey):
+                size += len(util.to_varint_bytes(len(output.scriptpubkey)))
+                size += len(output.scriptpubkey)
+        segwit_size = 0
+        if self.has_segwit():
+            segwit_size = 2
+            for entries in self.witnesses:
+                segwit_size += len(util.to_varint_bytes(len(entries)))
+                for entry in entries:
+                    segwit_size += len(util.to_varint_bytes(len(entry)))
+                    segwit_size += len(entry)
+        size += 4
+        return size+segwit_size, size+segwit_size/4
+
     @classmethod
     def from_hex(cls, hex_str):
         return cls.from_bin(binascii.unhexlify(hex_str))
@@ -269,8 +306,8 @@ class Transaction:
 
         t = Transaction()
         t.version = stream.read_int(4)
-        t.has_segwit = stream.peek() == 0
-        if t.has_segwit:
+        has_segwit = stream.peek() == 0
+        if has_segwit:
             assert stream.read_chunk(2)[1] == 1
 
         t.inputs = []
@@ -285,7 +322,7 @@ class Transaction:
             txout.parent_tx = t
             t.outputs.append(txout)
 
-        if t.has_segwit:
+        if has_segwit:
             t.witnesses = []
             wit_count = stream.read_varint()
             for i in range(wit_count):
@@ -307,6 +344,7 @@ class Transaction:
     #    return t
 
     def get_binary_for_segwit_signature(self, vin, hashtype):
+        print("get_binary_for_segwit_signature")
         empty_hash = bytearray([0]*32)
 
         if (hashtype & 0x80) != SIGHASH_ANYONECANPAY:
@@ -361,6 +399,7 @@ class Transaction:
         return preimage
 
     def get_binary_for_legacy_signature(self, vin, sighash_type):
+        print("get_binary_for_legacy_signature")
         tx_copy = deepcopy(self)
 
         if tx_copy.inputs[vin].txoutput is None:
@@ -369,7 +408,7 @@ class Transaction:
             subscript = tx_copy.inputs[vin].txoutput.scriptpubkey
 
         for input in tx_copy.inputs:
-            input.scriptsig = b'\x00'
+            input.scriptsig = bytearray()
         tx_copy.inputs[vin].scriptsig = subscript
 
         if sighash_type&3 == SIGHASH_ALL:
@@ -392,7 +431,7 @@ class Transaction:
         if sighash_type&0x80 == SIGHASH_ANYONECANPAY:
             tx_copy.inputs = [tx_copy.inputs[vin]]
 
-        tx_bin = tx_copy.to_bin()
+        tx_bin = tx_copy.to_bin(with_segwit=False)
         tx_bin.append(sighash_type)
         tx_bin += b"\x00\x00\x00"
         return tx_bin
@@ -413,7 +452,7 @@ class Transaction:
         if vin >= len(self.inputs):
             return None
         input = self.inputs[vin]
-        script_type = scriptVM.identify_scriptpubkey( input.txoutput.scriptpubkey)
+        script_type = scriptVM.identify_scriptpubkey(input.txoutput.scriptpubkey)
 
         if script_type == scriptVM.P2PK:
             full_script = input.scriptsig + input.txoutput.scriptpubkey
@@ -428,8 +467,7 @@ class Transaction:
             stream = scriptVM.ScriptByteStream(witness)
             for item in self.witnesses[vin]:
                 stream.add_chunk(item)
-            full_script = witness + input.scriptsig + bytearray([0x76,0xa9]) + self.inputs[vin].txoutput.scriptpubkey[1:] + bytearray([0x88, 0xac])
-            scriptVM.PrinterVM.run(full_script)
+            full_script = witness + input.scriptsig + scriptVM.make_P2PKH_scriptpubkey(self.inputs[vin].txoutput.scriptpubkey[2:])
         elif script_type == scriptVM.P2WSH:
             return False
         elif script_type == scriptVM.P2TR:
@@ -437,7 +475,6 @@ class Transaction:
         else:
             return False
 
-        print(scriptVM.RunnerVM.run(self, vin, full_script))
         return scriptVM.RunnerVM.run(self, vin, full_script)
 
     def sign_one(self, sighash_type, vin, wallets=None, private_key=None):
@@ -466,12 +503,14 @@ class Transaction:
             stream = scriptVM.ScriptByteStream(input.scriptsig)
             stream.add_chunk(signature)
             stream.add_chunk(pubkey)
+            self.witnesses[vin] = [] # empty
         elif script_type == scriptVM.P2WPKH:
             witness = [signature, pubkey]
             input.scriptsig = bytearray() # empty
             self.witnesses[vin] = witness
         else:
             print("Unknown scriptpubkey")
+            return False
 
         return True
 

@@ -463,9 +463,12 @@ class MainWindow(QMainWindow):
         self.wallets = {}
         self.transaction = transactions.Transaction()
 
-        unix_time = int(QDateTime.currentDateTime().toMSecsSinceEpoch()/1000)
-        self.transaction.locktime = unix_time
-        self.ui.locktimeLineEdit.setText(str(unix_time))
+        #unix_time = int(QDateTime.currentDateTime().toMSecsSinceEpoch()/1000)
+        self.transaction.locktime = 0
+        self.ui.locktimeLineEdit.setText(str("0"))
+
+        self.transaction_fee = 0
+        self.transaction_virtual_size = 0
 
     def locktime_datetime_changed(self):
         if self.propagate_locktime_change == False:
@@ -516,6 +519,7 @@ class MainWindow(QMainWindow):
 
         if checked:
             self.transaction.locktime = explorer.get_current_height(testnet)
+            #self.ui.dateTimeEdit.setDateTime(QDateTime.currentDateTime())
         else:
             self.transaction.locktime = int(self.ui.locktimeLineEdit.text())
         self.ui.broadcastPushButton.setEnabled(False)
@@ -575,17 +579,18 @@ class MainWindow(QMainWindow):
             if False == self.transaction.sign_one(transactions.SIGHASH_ALL, vin, wallets=self.wallets):
                 dialog = PKeyDialog(self.transaction, vin)
                 if dialog.exec():
-                    print(dialog.key.hex())
                     self.transaction.sign_one(transactions.SIGHASH_ALL, vin, private_key=dialog.key)
                 else:
                     print("No key for input")
             self.verify_one(vin)
 
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_size()
 
     def sign_all_mine(self):
         self.transaction.sign_all(self.wallets, transactions.SIGHASH_ALL)
         self.verify_all()
+        self.update_size()
 
     def input_changed(self, row, col):
         utxosTable = self.ui.UTXOsTableWidget
@@ -594,7 +599,9 @@ class MainWindow(QMainWindow):
         sequence = int(utxosTable.item(row, col).text())
         self.transaction.inputs[row].sequence = sequence
 
-        self.ui.broadcastPushButton.setEnabled(False)
+        self.ui.broadcastPushButton.setEnabled(False)        
+        if col == 1:
+            self.update_size()
 
     def output_changed(self, row, col):
         outputsTable = self.ui.outputsTableWidget
@@ -616,51 +623,51 @@ class MainWindow(QMainWindow):
             # change address
             address = outputsTable.item(row, col).text()
             try:
+                self.transaction.outputs[row].scriptpubkey = bytearray()
                 if len(address) == 0:
                     scheme = ""
-                elif not testnet:
-                    if address[0] == '1':
+                elif scriptVM.address_is_testnet(address) and not testnet:
+                    scheme = "ERROR: address is testnet, network is mainnet"
+                elif scriptVM.address_is_mainnet(address) and testnet:
+                    scheme = "ERROR: address is mainnet, network is testnet"
+                else:
+                    address_type = scriptVM.address_type(address)
+                    if address_type == scriptVM.P2PKH:
                         scheme = "P2PKH"
                         bin_address = Base58.check_decode(address)[1:]
-                        self.transaction.outputs[row].scriptpubkey = binascii.unhexlify('76a914') + bin_address + binascii.unhexlify('88ac')
-                    elif address[0] == '3':
+                        self.transaction.outputs[row].scriptpubkey = scriptVM.make_P2PKH_scriptpubkey(bin_address)
+                    elif address_type == scriptVM.P2SH:
                         scheme = "P2SH"
-                    elif address[0:4] == "bc1q":
-                        scheme = "Bech32"
-                        bin_address = bech32.decode('bc', address)[1]
-                        self.transaction.outputs[row].scriptpubkey = b'\x00\x14' + bytes(bin_address)
-                    elif address[0:4] == "bc1p":
+                        # TODO
+                    elif address_type == scriptVM.P2MS:
+                        scheme = "P2MS"
+                        # TODO
+                    elif address_type == scriptVM.P2WPKH:
+                        scheme = "P2WPKH"
+                        bin_address = bytes(bech32.decode('tb' if testnet else 'bc', address)[1])
+                        self.transaction.outputs[row].scriptpubkey = scriptVM.make_P2PWPKH_scriptpubkey(bin_address)
+                    elif address_type == scriptVM.P2WSH:
+                        scheme = "P2WSH"
+                        # TODO
+                    elif address_type == scriptVM.P2TR:
                         scheme = "P2TR"
+                        # TODO
                     else:
-                        scheme = "ERROR"
-                else:
-                    if address[0] == "m" or address[0] == "n":
-                        scheme = "P2PKH testnet"
-                        bin_address = Base58.check_decode(address)[1:]
-                        self.transaction.outputs[row].scriptpubkey = binascii.unhexlify('76a914') + bin_address + binascii.unhexlify('88ac')
-                    elif address[0] == '2':
-                        scheme = "P2SH testnet"
-                    elif address[0:4] == "tb1q":
-                        scheme = "Bech32 testnet"
-                        bin_address = bech32.decode('tb', address)[1]
-                        self.transaction.outputs[row].scriptpubkey = b'\x00\x14' + bytes(bin_address)
-                    elif address[0:4] == "tb1p":
-                        scheme = "P2TR testnet"
-                    else:
-                        scheme = "ERROR"
+                        scheme = "ERROR: unknown address type"
             except ValueError as e:
-                outputsTable.setItem(row, 2, QTableWidgetItem("Bad base58 checksum"))
-                return
+                scheme = "Bad base58 checksum"
             outputsTable.setItem(row, 2, QTableWidgetItem(scheme))
         else:
-            pass
+            return
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_size()
 
     def add_output(self):
         outputTable = self.ui.outputsTableWidget
         outputTable.insertRow(outputTable.rowCount())
         self.transaction.outputs.append(transactions.TxOutput())
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_size()
 
     def del_output(self):
         outputsTable = self.ui.outputsTableWidget
@@ -671,41 +678,44 @@ class MainWindow(QMainWindow):
             del self.transaction.outputs[idx]
         self.update_fee()
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_size()
 
     def add_utxos(self):
         j = json.dumps(util.to_dict(self.wallets))
         dialog = ChooseUTXOsDialog(self.wallets)
-        if dialog.exec():
-            utxoTable = self.ui.UTXOsTableWidget
-            current_height = explorer.get_current_height(testnet)
-            for utxo in dialog.utxos:
-                if self.transaction.has(utxo):
-                    continue
-                vin = self.transaction.add(utxo)
-                input = self.transaction.inputs[vin]
+        if not dialog.exec():
+            return
+        utxoTable = self.ui.UTXOsTableWidget
+        current_height = explorer.get_current_height(testnet)
+        for utxo in dialog.utxos:
+            if self.transaction.has(utxo):
+                continue
+            vin = self.transaction.add(utxo)
+            input = self.transaction.inputs[vin]
 
-                assert vin == utxoTable.rowCount()
-                utxoTable.insertRow(vin)
-                utxoTable.setItem(vin, 0, QTableWidgetItem(""))
-                utxoTable.setItem(vin, 1, QTableWidgetItem(str(input.sequence)))
-                utxoTable.setItem(vin, 2, QTableWidgetItem(str(utxo.amount)))
-                utxoTable.setItem(vin, 3, QTableWidgetItem(utxo.metadata.wallet_name))
-                if utxo.parent_tx.metadata.height:
-                    utxoTable.setItem(vin, 4, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
-                else:
-                    utxoTable.setItem(vin, 4, QTableWidgetItem("Unconfirmed"))
-                utxoTable.setItem(vin, 5, QTableWidgetItem(utxo.metadata.derivation))
-                utxoTable.setItem(vin, 6, QTableWidgetItem(utxo.metadata.address))
-                utxoTable.item(vin, 0).setFlags(Qt.ItemIsEditable)
-                utxoTable.item(vin, 2).setFlags(Qt.ItemIsEditable)
-                utxoTable.item(vin, 3).setFlags(Qt.ItemIsEditable)
-                utxoTable.item(vin, 4).setFlags(Qt.ItemIsEditable)
-                utxoTable.item(vin, 5).setFlags(Qt.ItemIsEditable)
-                utxoTable.item(vin, 6).setFlags(Qt.ItemIsEditable)
+            assert vin == utxoTable.rowCount()
+            utxoTable.insertRow(vin)
+            utxoTable.setItem(vin, 0, QTableWidgetItem(""))
+            utxoTable.setItem(vin, 1, QTableWidgetItem(str(input.sequence)))
+            utxoTable.setItem(vin, 2, QTableWidgetItem(str(utxo.amount)))
+            utxoTable.setItem(vin, 3, QTableWidgetItem(utxo.metadata.wallet_name))
+            if utxo.parent_tx.metadata.height:
+                utxoTable.setItem(vin, 4, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
+            else:
+                utxoTable.setItem(vin, 4, QTableWidgetItem("Unconfirmed"))
+            utxoTable.setItem(vin, 5, QTableWidgetItem(utxo.metadata.derivation))
+            utxoTable.setItem(vin, 6, QTableWidgetItem(utxo.metadata.address))
+            utxoTable.item(vin, 0).setFlags(Qt.ItemIsEditable)
+            utxoTable.item(vin, 2).setFlags(Qt.ItemIsEditable)
+            utxoTable.item(vin, 3).setFlags(Qt.ItemIsEditable)
+            utxoTable.item(vin, 4).setFlags(Qt.ItemIsEditable)
+            utxoTable.item(vin, 5).setFlags(Qt.ItemIsEditable)
+            utxoTable.item(vin, 6).setFlags(Qt.ItemIsEditable)
 
-            utxoTable.resizeColumnsToContents()
-            self.update_fee()
-            self.ui.broadcastPushButton.setEnabled(False)
+        utxoTable.resizeColumnsToContents()
+        self.update_fee()
+        self.ui.broadcastPushButton.setEnabled(False)
+        #self.update_size()
 
     def del_utxos(self):
         utxoTable = self.ui.UTXOsTableWidget
@@ -716,14 +726,29 @@ class MainWindow(QMainWindow):
             del self.transaction.inputs[idx]
         self.update_fee()
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_size()
 
     def update_fee(self):
         input_total = sum([utxo.txoutput.amount for utxo in self.transaction.inputs])
         output_total = sum([out.amount for out in self.transaction.outputs])
-        fee = input_total - output_total
+        self.transaction_fee = input_total - output_total
         self.ui.inputSumEdit.setText(str(input_total))
         self.ui.outputSumEdit.setText(str(output_total))
-        self.ui.feeEdit.setText(str(fee))
+        self.ui.feeEdit.setText(str(self.transaction_fee))
+        self.update_fee_per_byte()
+
+    def update_size(self):
+        self.transaction_size, self.transaction_virtual_size = self.transaction.get_approximate_size()
+        self.ui.transactionSizeEdit.setText(str(self.transaction_size))
+        self.ui.transactionVSizeEdit.setText(str(self.transaction_virtual_size))
+        self.update_fee_per_byte()
+
+    def update_fee_per_byte(self):
+        if self.transaction_virtual_size == 0:
+            feePerByteEdit.setText("")
+            return
+        fee_per_byte = self.transaction_fee / self.transaction_virtual_size
+        self.ui.feePerByteEdit.setText(str(fee_per_byte))
 
     def open_wallet_file(self):
         filename = QFileDialog.getOpenFileName(self, 'Open wallet', filter="Wallet files(*.wlt);;All files(*)")[0]
@@ -772,6 +797,7 @@ class MainWindow(QMainWindow):
         self.ui.UTXOsTableWidget.setRowCount(0)
         self.ui.outputsTableWidget.setRowCount(0)
         self.update_fee()
+        self.update_size()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -77,7 +77,7 @@ class Ui_MainWindow(object):
         self.UTXOsTableWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         self.UTXOsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.UTXOsTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.UTXOsTableWidget.verticalHeader().setVisible(True)
+        self.UTXOsTableWidget.verticalHeader().setVisible(False)
 
         self.verticalLayout_4.addWidget(self.UTXOsTableWidget)
 
@@ -113,7 +113,7 @@ class Ui_MainWindow(object):
         self.outputsTableWidget.setAlternatingRowColors(True)
         self.outputsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.outputsTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.outputsTableWidget.verticalHeader().setVisible(True)
+        self.outputsTableWidget.verticalHeader().setVisible(False)
 
         self.verticalLayout_5.addWidget(self.outputsTableWidget)
 
@@ -140,11 +140,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_9.addWidget(self.label_5)
 
-        self.lineEdit_5 = QLineEdit(self.centralwidget)
-        self.lineEdit_5.setObjectName(u"lineEdit_5")
-        self.lineEdit_5.setReadOnly(True)
+        self.transactionSizeEdit = QLineEdit(self.centralwidget)
+        self.transactionSizeEdit.setObjectName(u"transactionSizeEdit")
+        self.transactionSizeEdit.setReadOnly(True)
 
-        self.horizontalLayout_9.addWidget(self.lineEdit_5)
+        self.horizontalLayout_9.addWidget(self.transactionSizeEdit)
 
         self.widget_3 = QWidget(self.centralwidget)
         self.widget_3.setObjectName(u"widget_3")
@@ -170,11 +170,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_10.addWidget(self.label_6)
 
-        self.lineEdit_6 = QLineEdit(self.centralwidget)
-        self.lineEdit_6.setObjectName(u"lineEdit_6")
-        self.lineEdit_6.setReadOnly(True)
+        self.transactionVSizeEdit = QLineEdit(self.centralwidget)
+        self.transactionVSizeEdit.setObjectName(u"transactionVSizeEdit")
+        self.transactionVSizeEdit.setReadOnly(True)
 
-        self.horizontalLayout_10.addWidget(self.lineEdit_6)
+        self.horizontalLayout_10.addWidget(self.transactionVSizeEdit)
 
         self.widget_6 = QWidget(self.centralwidget)
         self.widget_6.setObjectName(u"widget_6")
@@ -240,11 +240,11 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_6.addWidget(self.label_4)
 
-        self.lineEdit_4 = QLineEdit(self.centralwidget)
-        self.lineEdit_4.setObjectName(u"lineEdit_4")
-        self.lineEdit_4.setReadOnly(True)
+        self.feePerByteEdit = QLineEdit(self.centralwidget)
+        self.feePerByteEdit.setObjectName(u"feePerByteEdit")
+        self.feePerByteEdit.setReadOnly(True)
 
-        self.horizontalLayout_6.addWidget(self.lineEdit_4)
+        self.horizontalLayout_6.addWidget(self.feePerByteEdit)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_6)
@@ -274,7 +274,7 @@ class Ui_MainWindow(object):
 
         self.locktimeLineEdit = QLineEdit(self.centralwidget)
         self.locktimeLineEdit.setObjectName(u"locktimeLineEdit")
-        self.locktimeLineEdit.setEnabled(False)
+        self.locktimeLineEdit.setEnabled(True)
         sizePolicy3 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         sizePolicy3.setHorizontalStretch(0)
         sizePolicy3.setVerticalStretch(0)
@@ -285,7 +285,7 @@ class Ui_MainWindow(object):
 
         self.dateTimeEdit = QDateTimeEdit(self.centralwidget)
         self.dateTimeEdit.setObjectName(u"dateTimeEdit")
-        self.dateTimeEdit.setEnabled(False)
+        self.dateTimeEdit.setEnabled(True)
         sizePolicy4 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy4.setHorizontalStretch(0)
         sizePolicy4.setVerticalStretch(0)
@@ -300,7 +300,7 @@ class Ui_MainWindow(object):
 
         self.PreventFeeSnipingCheckBox = QCheckBox(self.centralwidget)
         self.PreventFeeSnipingCheckBox.setObjectName(u"PreventFeeSnipingCheckBox")
-        self.PreventFeeSnipingCheckBox.setChecked(True)
+        self.PreventFeeSnipingCheckBox.setChecked(False)
 
         self.gridLayout.addWidget(self.PreventFeeSnipingCheckBox, 0, 3, 1, 1)
 
@@ -396,9 +396,9 @@ class Ui_MainWindow(object):
         self.addOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
         self.removeOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"Transaction size ~", None))
-        self.lineEdit_5.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.transactionSizeEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"Virtual size ~", None))
-        self.lineEdit_6.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.transactionVSizeEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Inputs total amount", None))
         self.inputSumEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"Outputs total amount", None))
@@ -406,10 +406,10 @@ class Ui_MainWindow(object):
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Fee", None))
         self.feeEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"sat/B ~", None))
-        self.lineEdit_4.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.feePerByteEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.label_7.setText(QCoreApplication.translate("MainWindow", u"LockTime", None))
         self.locktimeLineEdit.setInputMask(QCoreApplication.translate("MainWindow", u"000000000000", None))
-        self.locktimeLineEdit.setText(QCoreApplication.translate("MainWindow", u"2000000000", None))
+        self.locktimeLineEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.dateTimeEdit.setDisplayFormat(QCoreApplication.translate("MainWindow", u"yyyy-MM-dd HH:mm", None))
         self.PreventFeeSnipingCheckBox.setText(QCoreApplication.translate("MainWindow", u"Prevent fee sniping", None))
         self.signAllPUshButton.setText(QCoreApplication.translate("MainWindow", u"Sign all mine", None))

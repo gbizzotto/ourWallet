@@ -70,6 +70,8 @@ def get_transaction_metadata(txid, testnet):
         md.__dict__ = copy.copy(get_transaction_metadata.cache[txid.hex()])
     else:
         md = go_get_transaction_metadata(txid, testnet)
+        if md is None:
+            return None
         # make a copy of md to avoid storing txid in cache as key AND value
         get_transaction_metadata.cache[txid.hex()] = copy.copy(md.__dict__)
         # write cache to file
