@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>449</width>
-    <height>567</height>
+    <width>514</width>
+    <height>497</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,13 +31,19 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
-     <widget class="QWidget" name="tab_2">
+     <widget class="QWidget" name="tab_utxos">
       <attribute name="title">
        <string>UTXOs</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
         <widget class="QTableWidget" name="utxoTable">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
          <attribute name="horizontalHeaderStretchLastSection">
           <bool>true</bool>
          </attribute>
@@ -62,27 +68,6 @@
            </property>
           </widget>
          </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <item>
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Derivation scheme</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="utxoDerivationCombo">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-          </widget>
-         </item>
          <item>
           <widget class="QPushButton" name="utxoRefreshButton">
            <property name="text">
@@ -92,16 +77,9 @@
          </item>
         </layout>
        </item>
-       <item>
-        <widget class="QPushButton" name="saveButton">
-         <property name="text">
-          <string>Save</string>
-         </property>
-        </widget>
-       </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="tab_addresses">
       <attribute name="title">
        <string>Addresses</string>
       </attribute>
@@ -123,91 +101,86 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QRadioButton" name="addressRadio">
+          <widget class="QCheckBox" name="showChangeCheckBox">
            <property name="text">
-            <string>address</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Show change addresses</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="keyRadio">
+          <widget class="QCheckBox" name="showWIFCheckBox">
            <property name="text">
-            <string>private key</string>
-           </property>
-           <property name="checked">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="xpubRadio">
-           <property name="text">
-            <string>xpub</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="xprvRadio">
-           <property name="text">
-            <string>xprv</string>
+            <string>Also show private key (WIF format)</string>
            </property>
           </widget>
          </item>
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QLabel" name="label_2">
+          <widget class="QLabel" name="label_3">
            <property name="text">
-            <string>Derivation</string>
+            <string>From</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="derivationCombo">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+          <widget class="QLineEdit" name="fromEdit">
+           <property name="inputMask">
+            <string>0000000000</string>
            </property>
-           <property name="currentText">
-            <string/>
+           <property name="text">
+            <string>0</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="derivationEdit">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>to</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="toEdit">
+           <property name="inputMask">
+            <string>0000000000</string>
+           </property>
+           <property name="text">
+            <string>20</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="showMoreButton">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="minimumSize">
-            <size>
-             <width>128</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="baseSize">
-            <size>
-             <width>128</width>
-             <height>0</height>
-            </size>
-           </property>
            <property name="text">
-            <string/>
+            <string>Show</string>
            </property>
           </widget>
          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="addressTableWidget">
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="verticalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+        </widget>
        </item>
        <item>
         <widget class="QLabel" name="qrcodeLabel">
@@ -225,39 +198,96 @@
          </property>
         </widget>
        </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_config">
+      <attribute name="title">
+       <string>Configuration</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
-        <widget class="QTextEdit" name="valueEdit">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>Be sure to know what you're doing here</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="addressDerivationEdit"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="whereFromComboBox"/>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Where I got this wallet from</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QComboBox" name="addressTypeComboBox"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Change derivation</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="changeDerivationEdit"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Deposits derivation</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Standard derivation schemes</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Type of addresses to generate</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="derivationSchemeComboBox"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QWidget" name="widget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>64</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>64</height>
-          </size>
-         </property>
-         <property name="baseSize">
-          <size>
-           <width>0</width>
-           <height>64</height>
-          </size>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
          </property>
         </widget>
        </item>
       </layout>
      </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="saveButton">
+     <property name="text">
+      <string>Save</string>
+     </property>
     </widget>
    </item>
   </layout>

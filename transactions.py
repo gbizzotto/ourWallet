@@ -139,6 +139,9 @@ class TxOutput:
         self.amount = 0
         self.scriptpubkey = bytearray()
 
+    def eq(self, other):
+        return self.metadata.txid == other.metadata.txid and self.metadata.vout == other.metadata.vout
+
     def to_dict(self):
         d = deepcopy(self.__dict__)
         if "parent_tx" in d:
@@ -344,7 +347,6 @@ class Transaction:
     #    return t
 
     def get_binary_for_segwit_signature(self, vin, hashtype):
-        print("get_binary_for_segwit_signature")
         empty_hash = bytearray([0]*32)
 
         if (hashtype & 0x80) != SIGHASH_ANYONECANPAY:
@@ -399,7 +401,6 @@ class Transaction:
         return preimage
 
     def get_binary_for_legacy_signature(self, vin, sighash_type):
-        print("get_binary_for_legacy_signature")
         tx_copy = deepcopy(self)
 
         if tx_copy.inputs[vin].txoutput is None:

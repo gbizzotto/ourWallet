@@ -59,6 +59,9 @@ from bip32utils import Base58
 testnet = True
 
 def set_qr_label(label, text):
+    if text is None or len(text) == 0:
+        label.setPixmap(QPixmap())
+        return
     buf = BytesIO()
     img = qrcode.make(text)
     img.save(buf, "PNG")
@@ -88,28 +91,125 @@ class WalletInfoDialog(QDialog):
         self.wallet = wallet
         self.ui = Ui_walletInfoDialog()
         self.ui.setupUi(self)
-        self.fill_combos()
         self.setWindowTitle(wallet.name)
-        self.ui.derivationEdit.returnPressed.connect(self.updateQrCode)
-        self.ui.derivationCombo.currentIndexChanged.connect(self.derivationComboChanged)
-        self.ui.derivationCombo.setCurrentIndex(0)
-        self.derivationComboChanged()
-        self.ui.utxoDerivationCombo.setCurrentIndex(0)
-        self.ui.addressRadio.toggled.connect(self.updateQrCode)
-        self.ui.keyRadio    .toggled.connect(self.updateQrCode)
-        self.ui.xpubRadio   .toggled.connect(self.updateQrCode)
-        self.ui.xprvRadio   .toggled.connect(self.updateQrCode)
+
+        # todo: get those from a config file or something
+        network = "1" if testnet else "0"
+        words_wallet_schemes = \
+            {
+                "Legacy":        ["m/44'/"+network+"'/0'/0/x", "m/44'/"+network+"'/0'/1/x", 0],
+                "Compatibility": ["m/49'/"+network+"'/0'/0/x", "m/49'/"+network+"'/0'/1/x", 1],
+                "Segwit":        ["m/84'/"+network+"'/0'/0/x", "m/84'/"+network+"'/0'/1/x", 2]
+            }
+        self.schemes = {
+            "Bitcoin core (v0.13.0, 2016-08-23 onward)":
+                {"Legacy": ["m/0'/0'/0'", "m/0'/0'/0'", 0]},
+            "12 words from ourWallet, Mycelium, Samourai, Coinomi or bitcoin.com":
+                words_wallet_schemes,
+            "12 words from Mycelium, Samourai or Coinomi":
+                words_wallet_schemes,
+            "12 words from bitcoin.com":
+                words_wallet_schemes,
+            "xprv from Mycelium, Samourai, Coinomi or bitcoin.com": {"Legacy":        ["m/0/x", "m/1/x", 0]},
+            "yprv from Mycelium, Samourai, Coinomi or bitcoin.com": {"Compatibility": ["m/0/x", "m/1/x", 1]},
+            "zprv from Mycelium, Samourai, Coinomi or bitcoin.com": {"Segwit":        ["m/0/x", "m/1/x", 2]},
+            }
+        self.ui.whereFromComboBox.addItem("")
+        for k in self.schemes.keys():
+            self.ui.whereFromComboBox.addItem(k)
+        self.ui.whereFromComboBox.currentIndexChanged.connect(self.whereFromComboBoxChanged)
+
+        self.ui.derivationSchemeComboBox.currentIndexChanged.connect(self.derivationSchemeChanged)
+
+        self.ui.showMoreButton.clicked.connect(self.show_addresses)
+
+        self.ui.addressTypeComboBox.addItem('Legacy', wallets.LEGACY)
+        self.ui.addressTypeComboBox.addItem('Segwit-legacy compatibility', wallets.COMPATIBILITY)
+        self.ui.addressTypeComboBox.addItem('Bech32/segwit', wallets.SEGWIT)
+        self.ui.addressTypeComboBox.setCurrentIndex({wallets.LEGACY:0,wallets.COMPATIBILITY:1,wallets.SEGWIT:2}[self.wallet.address_type])
+        self.ui.addressTypeComboBox.currentIndexChanged.connect(self.addressTypeComboChanged)
+
+        addresses_columns_titles = ["Derivation", "Address", "Private key (WIF)"]
+        self.ui.addressTableWidget.setColumnCount(len(addresses_columns_titles))
+        self.ui.addressTableWidget.setHorizontalHeaderLabels(addresses_columns_titles)
+        self.ui.addressTableWidget.resizeColumnsToContents()
+        self.ui.addressTableWidget.itemSelectionChanged.connect(self.address_selection_changed)
+
         utxo_columns_titles = ["confirmations", "amount", "derivation", "address"]
         self.ui.utxoTable.setColumnCount(len(utxo_columns_titles))
         self.ui.utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
         self.ui.utxoRefreshButton.clicked.connect(self.refresh_utxos)
         self.ui.       saveButton.clicked.connect(self.save)
 
+        self.ui.addressDerivationEdit.setText(self.wallet.address_derivation)
+        self.ui. changeDerivationEdit.setText(self.wallet. change_derivation)
+
+        self.ui.addressDerivationEdit.returnPressed.connect(self.addressDerivationEditChanged)
+        self.ui. changeDerivationEdit.returnPressed.connect(self. changeDerivationEditChanged)
+
         self.display_utxos(wallet.utxos)
 
-        # workaround for qrcode size glitch
-        self.ui.tabWidget.setCurrentIndex(1)
-        self.ui.tabWidget.setCurrentIndex(0)
+    def resizeEvent(self, event):
+        self.address_selection_changed()
+
+    def derivationSchemeChanged(self):
+        if len(self.ui.whereFromComboBox.currentText()) == 0 or len(self.ui.derivationSchemeComboBox.currentText()) == 0:
+            return
+        self.ui.addressDerivationEdit.setText      (self.schemes[self.ui.whereFromComboBox.currentText()][self.ui.derivationSchemeComboBox.currentText()][0])
+        self.ui. changeDerivationEdit.setText      (self.schemes[self.ui.whereFromComboBox.currentText()][self.ui.derivationSchemeComboBox.currentText()][1])
+        self.ui.addressTypeComboBox.setCurrentIndex(self.schemes[self.ui.whereFromComboBox.currentText()][self.ui.derivationSchemeComboBox.currentText()][2])
+
+    def whereFromComboBoxChanged(self):
+        if len(self.ui.whereFromComboBox.currentText()) == 0:
+            return
+        schemes = self.schemes[self.ui.whereFromComboBox.currentText()]
+        self.ui.derivationSchemeComboBox.clear()
+        for k in schemes.keys():
+            self.ui.derivationSchemeComboBox.addItem(k)
+
+    def address_selection_changed(self):
+        table = self.ui.addressTableWidget
+
+        if table.currentItem() is None or len(table.currentItem().text()) == 0:
+            set_qr_label(self.ui.qrcodeLabel, "")
+        else:
+            set_qr_label(self.ui.qrcodeLabel, table.currentItem().text())
+
+    def clear_address_table(self):
+        self.ui.addressTableWidget.setRowCount(0)
+
+    def show_addresses(self):
+        table = self.ui.addressTableWidget
+        show_wif = self.ui.showWIFCheckBox.isChecked()
+        show_change = self.ui.showChangeCheckBox.isChecked()
+        from_ = int(self.ui.fromEdit.text())
+        to_   = int(self.ui.  toEdit.text())
+        table.setRowCount(0)
+        derivation_pattern = self.wallet.change_derivation if show_change else self.wallet.address_derivation
+        for i in range(from_, to_+1):
+            derivation = derivation_pattern.replace("x", str(i))
+            address = self.wallet.address(derivation)
+            row_idx = table.rowCount()
+            table.insertRow(row_idx)
+            table.setItem(row_idx, 0, QTableWidgetItem(derivation))
+            table.setItem(row_idx, 1, QTableWidgetItem(address))
+            if show_wif:
+                wif = self.wallet.privkey_wif(derivation)
+                table.setItem(row_idx, 2, QTableWidgetItem(wif))
+        table.resizeColumnsToContents()
+
+    def addressDerivationEditChanged(self):
+        self.wallet.address_derivation = self.ui.addressDerivationEdit.text()
+        self.wallet.dirty = True
+
+    def changeDerivationEditChanged(self):
+        self.wallet.change_derivation = self.ui.changeDerivationEdit.text()
+        self.wallet.dirty = True
+
+    def addressTypeComboChanged(self):
+        self.wallet.address_type = int(self.ui.addressTypeComboBox.currentData())
+        self.wallet.dirty = True
+        self.ui.addressTableWidget.setRowCount(0)
 
     def display_utxos(self, utxos):
         current_height = explorer.get_current_height(testnet)
@@ -118,38 +218,18 @@ class WalletInfoDialog(QDialog):
         balance = 0
         for utxo in utxos:
             balance += utxo.amount
-
             row_idx = utxoTable.rowCount()
             utxoTable.insertRow(row_idx)
             if utxo.parent_tx is None:
                 utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
-            if utxo.parent_tx.metadata.height:
+            if utxo.parent_tx.metadata and utxo.parent_tx.metadata.height:
                 utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
             else:
                 utxoTable.setItem(row_idx, 0, QTableWidgetItem("Unconfirmed"))
             utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
             utxoTable.setItem(row_idx, 2, QTableWidgetItem(utxo.metadata.derivation))
             utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.address))
-
         self.ui.balanceEdit.setText(str(balance))
-
-    def fill_combos(self):
-        # todo: get those from a config file or something
-        self.ui.derivationCombo.addItem("Root", "m")
-        network = "1" if testnet else "0"
-        self.ui.derivationCombo.addItem("Bitcoin core (v0.13.0, 2016-08-23 onward)", "m/0'/0'/0'")
-        self.ui.derivationCombo.addItem("Mycelium legacy addresses (2015 onward)", "m/44'/"+network+"'/0'/0/0")
-        self.ui.derivationCombo.addItem("Mycelium P2SH addresses (2018 onward)"  , "m/49'/"+network+"'/0'/0/0")
-        self.ui.derivationCombo.addItem("Mycelium segwit addresses (2018 onward)", "m/84'/"+network+"'/0'/0/0")
-        self.ui.utxoDerivationCombo.addItem("Try everything (slow)", "m, m/x, m/0/x, m/1/x, m/0'/0'/x', m/44'/"+network+"'/0'/0/x, m/44'/"+network+"'/0'/1/x, m/49'/"+network+"'/0'/0/x, m/49'/"+network+"'/0'/1/x, m/84'/"+network+"'/0'/0/x, m/84'/"+network+"'/0'/1/x")
-        self.ui.utxoDerivationCombo.addItem("Root key only", "m")
-        self.ui.utxoDerivationCombo.addItem("Simple derivations", "m/x")
-        self.ui.utxoDerivationCombo.addItem("Bip44/49/84 Account key", "m/0/x, m/1/x")
-        self.ui.utxoDerivationCombo.addItem("Bitcoin core (v0.13.0, 2016-08-23 onward)", "m/0'/0'/x'")
-
-    def derivationComboChanged(self):
-        self.ui.derivationEdit.setText(self.ui.derivationCombo.currentData())
-        self.updateQrCode()
 
     def updateQrCode(self):
         derivation = self.ui.derivationEdit.text()
@@ -165,35 +245,33 @@ class WalletInfoDialog(QDialog):
         set_qr_label(self.ui.qrcodeLabel, text)
         self.ui.valueEdit.setText(text)
 
-    def resizeEvent(self, event):
-        set_qr_label(self.ui.qrcodeLabel, self.ui.valueEdit.toPlainText())
-
     def refresh_utxos(self):
-        derivation_patterns = [x.strip() for x in self.ui.utxoDerivationCombo.currentData().split(',')]
-        balance = 0
-        utxos = []
-        for derivation_pattern in derivation_patterns:
+        changed = False
+        for derivation_pattern in (self.wallet.address_derivation, self.wallet.change_derivation):
             if 'x' in derivation_pattern:
                 max = 10
                 i = 0
                 while i < max:
                     derivation = derivation_pattern.replace("x", str(i))
                     address = self.wallet.address(derivation)
-                    for utxo in explorer.get_utxos(self.wallet.name, address, derivation, testnet):
-                        utxos.append(utxo)
-                        max = i+10
+                    utxos = explorer.get_utxos(self.wallet.name, address, derivation, testnet)
+                    if len(utxos) == 0:
+                        changed = self.wallet.remove_utxos_by_address(address) or changed
+                    else:
+                        for utxo in utxos:
+                            if utxo.metadata.spent:
+                                changed = self.wallet.remove_utxo(utxo) or changed
+                            else:
+                                changed = self.wallet.add_utxo(utxo) or changed
+                            max = i+10
                     i += 1
             else:
                 address = self.wallet.address(derivation_pattern)
                 for utxo in explorer.get_utxos(self.wallet.name, address, derivation_pattern, testnet):
-                    utxos.append(utxo)
-
-        old_utxos = set([utxo.metadata.txid.hex()+str(utxo.metadata.vout) for utxo in self.wallet.utxos])
-        new_utxos = set([utxo.metadata.txid.hex()+str(utxo.metadata.vout) for utxo in             utxos])
-        if new_utxos != old_utxos:
-            self.wallet.utxos = utxos
+                    changed = changed or self.wallet.add_utxo(utxo)
+        if changed:
             self.wallet.dirty = True
-            self.display_utxos(utxos)
+            self.display_utxos(self.wallet.utxos)
 
     def save(self):
         save(self.wallet, self)
