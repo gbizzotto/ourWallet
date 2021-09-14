@@ -5,3 +5,4 @@ all:
 	pyside6-uic ui/addwalletfromxprvdialog.ui > ui/addwalletfromxprvdialog.py
 	pyside6-uic ui/chooseutxosdialog.ui > ui/chooseutxosdialog.py
 	pyside6-uic ui/privatekeydialog.ui > ui/privatekeydialog.py
+	pyside6-uic ui/createwordswallet.ui > ui/createwordswallet.py

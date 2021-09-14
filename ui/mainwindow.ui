@@ -479,7 +479,6 @@
     <addaction name="actionLoad_from_words"/>
     <addaction name="actionLoad_from_xprv"/>
     <addaction name="actionNew_HD"/>
-    <addaction name="actionNew_empty"/>
     <addaction name="separator"/>
    </widget>
    <addaction name="menuTX"/>

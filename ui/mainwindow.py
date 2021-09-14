@@ -371,7 +371,6 @@ class Ui_MainWindow(object):
         self.menuWallets.addAction(self.actionLoad_from_words)
         self.menuWallets.addAction(self.actionLoad_from_xprv)
         self.menuWallets.addAction(self.actionNew_HD)
-        self.menuWallets.addAction(self.actionNew_empty)
         self.menuWallets.addSeparator()
 
         self.retranslateUi(MainWindow)

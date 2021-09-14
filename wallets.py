@@ -112,7 +112,7 @@ class WordsWallet(HDWallet):
         return cls(d["name"], d["phrase"], d["passwd"], d["testnet"], d["address_derivation"], d["change_derivation"], d["address_type"])
 
 class ExtendedKeyWallet(HDWallet):
-    def __init__(self, name, extendedkey, address_derivation, change_derivation, address_type):
+    def __init__(self, name, extendedkey, address_derivation=None, change_derivation=None, address_type=None):
         self.extendedkey = extendedkey
         root_key = bip32utils.BIP32Key.fromExtendedKey(self.extendedkey)
         if address_derivation is None:

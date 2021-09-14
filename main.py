@@ -10,6 +10,7 @@ import json
 from copy import deepcopy
 import hashlib
 import importlib.util
+import random
 
 def auto_import(module_name):
     if importlib.util.find_spec(module_name) is None:
@@ -44,6 +45,7 @@ from ui.addwalletfromxprvdialog  import Ui_AddWalletFromXprvDialog
 from ui.walletinfo import Ui_walletInfoDialog
 from ui.chooseutxosdialog import Ui_ChooseUTXOsDialog
 from ui.privatekeydialog import Ui_PKeyDialog
+from ui.createwordswallet import Ui_CreateWordWalletDialog
 
 import explorer
 import transactions
@@ -94,6 +96,7 @@ class WalletInfoDialog(QDialog):
         self.setWindowTitle(wallet.name)
 
         # todo: get those from a config file or something
+
         network = "1" if testnet else "0"
         words_wallet_schemes = \
             {
@@ -144,8 +147,8 @@ class WalletInfoDialog(QDialog):
         self.ui.addressDerivationEdit.setText(self.wallet.address_derivation)
         self.ui. changeDerivationEdit.setText(self.wallet. change_derivation)
 
-        self.ui.addressDerivationEdit.returnPressed.connect(self.addressDerivationEditChanged)
-        self.ui. changeDerivationEdit.returnPressed.connect(self. changeDerivationEditChanged)
+        self.ui.addressDerivationEdit.textChanged.connect(self.addressDerivationEditChanged)
+        self.ui. changeDerivationEdit.textChanged.connect(self. changeDerivationEditChanged)
 
         self.display_utxos(wallet.utxos)
 
@@ -276,6 +279,47 @@ class WalletInfoDialog(QDialog):
     def save(self):
         save(self.wallet, self)
 
+class CreateWordWalletDialog(QDialog):
+    def __init__(self):
+        super(CreateWordWalletDialog, self).__init__()
+        self.ui = Ui_CreateWordWalletDialog()
+        self.ui.setupUi(self)
+        self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+        self.ui.wordsPlainTextEdit.textChanged.connect(self.checks)
+        self.ui.nameLineEdit      .textChanged.connect(self.checks)
+        self.ui.generatePushButton.clicked.connect(self.generate_passphrase)
+    def generate_passphrase(self):
+        entropy = random.randint(1<<120, 1<<128-1)
+        entropy_bytes = util.int_to_bytes(entropy)
+        cs = (hashlib.sha256(entropy_bytes).digest()[0] & 0xF0) >> 4
+        entropy = (entropy << 4) | cs
+        with open("english.txt", "r") as f:
+            words = f.read().split()
+        phrase = []
+        for i in range(0,12):
+            phrase.append(words[entropy & 0x7FF])
+            entropy >>= 11
+        assert entropy == 0
+        self.ui.wordsPlainTextEdit.document().setPlainText(" ".join(phrase[::-1]))
+    def checks(self):
+        errors = []
+        if len(self.ui.nameLineEdit.text()) == 0:
+            errors.append("Give it a name")
+        words = " ".join(str(self.ui.wordsPlainTextEdit.toPlainText()).split())
+        if not bip39.check_phrase(words):
+            errors.append("Bad checksum")
+        self.ui.warningLabel.setText("; ".join(errors))
+        self.ui.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(len(errors) == 0)
+        return len(errors) == 0
+    def accept(self):
+        if not self.checks():
+            return
+        words = " ".join(str(self.ui.wordsPlainTextEdit.toPlainText()).split())
+        password = str(self.ui.pwLineEdit.text())
+        testnet_str = "1" if testnet else "0"
+        self.wallet = wallets.WordsWallet(self.ui.nameLineEdit.text(), words, password, testnet, "m/84'/"+testnet_str+"'/0'/0/x", "m/84'/"+testnet_str+"'/0'/0/x", wallets.SEGWIT)
+        super(CreateWordWalletDialog, self).accept()
+
 class AddWalletFromWordsDialog(QDialog):
     def __init__(self):
         super(AddWalletFromWordsDialog, self).__init__()
@@ -299,7 +343,8 @@ class AddWalletFromWordsDialog(QDialog):
             return
         words = " ".join(str(self.ui.wordsPlainTextEdit.toPlainText()).split())
         password = str(self.ui.pwLineEdit.text())
-        self.wallet = wallets.WordsWallet(self.ui.nameLineEdit.text(), words, password, testnet)
+        testnet_str = "1" if testnet else "0"
+        self.wallet = wallets.WordsWallet(self.ui.nameLineEdit.text(), words, password, testnet, "m/84'/"+testnet_str+"'/0'/0/x", "m/84'/"+testnet_str+"'/0'/0/x", wallets.SEGWIT)
         super(AddWalletFromWordsDialog, self).accept()
 
 class AddWalletFromXprvDialog(QDialog):
@@ -507,6 +552,7 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.ui.actionLoad_from_words.triggered.connect(self.add_wallet_from_words)
         self.ui.actionLoad_from_xprv .triggered.connect(self.add_wallet_from_xprv )
+        self.ui.actionNew_HD         .triggered.connect(self.create_words_wallet  )
         self.ui.actionOpen           .triggered.connect(self.open_wallet_file     )
         self.ui.    addUTXOsPushButton.clicked.connect(self.add_utxos    )
         self.ui.      removeUTXOButton.clicked.connect(self.del_utxos    )
@@ -854,9 +900,10 @@ class MainWindow(QMainWindow):
 
     def add_wallet_from_words(self, event):
         self.add_wallet_from_dialog(AddWalletFromWordsDialog())
-
     def add_wallet_from_xprv(self, event):
         self.add_wallet_from_dialog(AddWalletFromXprvDialog())
+    def create_words_wallet(self):
+        self.add_wallet_from_dialog(CreateWordWalletDialog())
 
     def menu_action_wallet_name(self, name):
         if name not in self.wallets:
