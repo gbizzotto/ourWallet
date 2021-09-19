@@ -1,6 +1,12 @@
 # ourWallet
 Full-control BTC wallet
 
+## How to make it work
+
+- install python3 and pip
+- run `pip install -r requirements.txt` to download the dependencies
+- run `python main.py`
+
 ## Goals:
 
 - :heavy_check_mark: Manually choose UTXOs in new TXs
