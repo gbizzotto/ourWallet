@@ -13,8 +13,9 @@ Full-control BTC wallet
 - :heavy_check_mark: Manually set fee
 - :heavy_check_mark: Sign individual UTXOs
 - :heavy_check_mark: Set nLockTime
-- :white_check_mark: Manage BIP32 wallets and unique private keys
+- :heavy_check_mark: Manage BIP32 wallets
 - :white_check_mark: Allow Dbl spend for better control over RBF
-- Choose SigHash
+- :white_check_mark: Choose SigHash
+- Manage wallets that are a lose collection of private keys
 - Export/Import (un)signed TXs
 - Write custom Script (as in scriptpubkey and scriptsig)
