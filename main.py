@@ -32,7 +32,7 @@ auto_import("PySide6")
 auto_import("qrcode")
 auto_import("bip39")
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox, QAbstractItemView
 from PySide6.QtCore import QFile, QIODevice, Qt, QSize, QDateTime, QAbstractTableModel, QModelIndex
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QPixmap, QPalette, QBrush, QColor
@@ -641,6 +641,102 @@ class InputsTableModel(QAbstractTableModel):
                 return int(Qt.AlignVCenter | Qt.AlignLeft)
         return None
 
+class OutputsTableModel(QAbstractTableModel):
+    def __init__(self, outputs):
+        QAbstractTableModel.__init__(self)
+        self.outputs = outputs
+        self.columns = ["Amount", "Address", "ScriptPubKey type"]
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self.outputs)
+    def columnCount(self, parent=QModelIndex()):
+        return len(self.columns)
+    def headerData(self, section, orientation, role):
+        if role != Qt.DisplayRole:
+            return None
+        if orientation == Qt.Horizontal:
+            return self.columns[section]
+        else:
+            return "{}".format(section)
+    def setData(self, index, value, role):
+        if not index.isValid():
+            return False
+        if role != Qt.EditRole:
+            return False
+        row = index.row()
+        if row < 0 or row >= len(self.outputs):
+            return False
+        column = index.column()
+        if column >= 2:
+            return False
+        if column == 0:
+            if len(value) > 0:
+                self.outputs[row].amount = int(value)
+        elif column == 1:
+            output = self.outputs[row]
+            output.metadata.address = value
+            address_type = scriptVM.address_type(value)
+            if address_type == scriptVM.P2PKH:
+                bin_address = Base58.check_decode(value)[1:]
+                output.scriptpubkey = scriptVM.make_P2PKH_scriptpubkey(bin_address)
+            # TODO elif address_type == scriptVM.P2SH:
+            # TODO elif address_type == scriptVM.P2MS:
+            elif address_type == scriptVM.P2WPKH:
+                bin_address = bytes(bech32.decode('tb' if testnet else 'bc', value)[1])
+                output.scriptpubkey = scriptVM.make_P2PWPKH_scriptpubkey(bin_address)
+            # TODO elif address_type == scriptVM.P2WSH:
+            # TODO elif address_type == scriptVM.P2TR:
+        self.dataChanged.emit(index, index)
+        return True
+    def flags(self, index):
+        f = super(self.__class__,self).flags(index)
+        f |= Qt.ItemIsSelectable
+        f |= Qt.ItemIsEnabled
+        if index.column() < 2:
+            f |= Qt.ItemIsEditable
+        return f
+    def data(self, index, role=Qt.DisplayRole):
+        column = index.column()
+        row    = index.row()
+        output = self.outputs[row]
+        if role == Qt.DisplayRole or role == Qt.EditRole:
+            if column == 0:
+                return "{}".format(output.amount)
+            elif column == 1:
+                if not output.metadata or not output.metadata.address:
+                    return ""
+                return "{}".format(output.metadata.address)
+            elif column == 2:
+                if not output.metadata or not output.metadata.address:
+                    return ""
+                address = output.metadata.address
+                if len(address) == 0:
+                    return ""
+                elif scriptVM.address_is_testnet(address) and not testnet:
+                    return "ERROR: address is testnet, network is mainnet"
+                elif scriptVM.address_is_mainnet(address) and testnet:
+                    return "ERROR: address is mainnet, network is testnet"
+                else:
+                    address_type = scriptVM.address_type(address)
+                    if address_type == scriptVM.P2PKH:
+                        return "P2PKH"
+                    elif address_type == scriptVM.P2SH:
+                        return "P2SH"
+                    elif address_type == scriptVM.P2MS:
+                        return "P2MS"
+                    elif address_type == scriptVM.P2WPKH:
+                        return "P2WPKH"
+                    elif address_type == scriptVM.P2WSH:
+                        return "P2WSH"
+                    elif address_type == scriptVM.P2TR:
+                        return "P2TR"
+                    else:
+                        return "ERROR: unknown address type"
+        elif role == Qt.TextAlignmentRole:
+            if column == 0:
+                return int(Qt.AlignVCenter | Qt.AlignRight)
+            return int(Qt.AlignVCenter | Qt.AlignLeft)
+        return None
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -668,19 +764,15 @@ class MainWindow(QMainWindow):
 
         self.ui.broadcastPushButton.setEnabled(False)
 
-        outputsTable = self.ui.outputsTableWidget
-        outputs_columns_titles = ["Amount", "Address", "ScriptPubKey type"]
-        outputsTable.setColumnCount(len(outputs_columns_titles))
-        outputsTable.setHorizontalHeaderLabels(outputs_columns_titles)
-
-        outputsTable.cellChanged.connect(self.output_changed)
-
         self.wallets = {}
         self.transaction = transactions.Transaction()
 
-        self.inputs_view_model = InputsTableModel(self.transaction.inputs)
-        self.ui.inputsView.setModel(self.inputs_view_model)
+        self.ui.inputsView.setModel(InputsTableModel(self.transaction.inputs))
         self.ui.inputsView.clicked.connect(self.selected_inputs_changed)
+        self.ui.inputsView.model().dataChanged.connect(self.update_inputs_view)
+
+        self.ui.outputsView.setModel(OutputsTableModel(self.transaction.outputs))
+        self.ui.outputsView.model().dataChanged.connect(self.update_outputs_view)
 
         #unix_time = int(QDateTime.currentDateTime().toMSecsSinceEpoch()/1000)
         self.transaction.locktime = 0
@@ -706,7 +798,7 @@ class MainWindow(QMainWindow):
 
     def selected_inputs_changed(self, index):
         selected_indexes = set([x.row() for x in self.ui.inputsView.selectedIndexes()])
-        self.inputs_view_model.set_selected(selected_indexes)
+        self.ui.inputsView.model().set_selected(selected_indexes)
 
     def locktime_datetime_changed(self):
         if self.propagate_locktime_change == False:
@@ -833,93 +925,49 @@ class MainWindow(QMainWindow):
         self.update_inputs_view()
         self.update_size()
 
-    def output_changed(self, row, col):
-        outputsTable = self.ui.outputsTableWidget
-        if col == 0:
-            # change Amount
-            sum = 0
-            for row_idx in range(0, outputsTable.rowCount()):
-                try:
-                    v = int(outputsTable.item(row_idx, 0).text())
-                    sum += v
-                    self.transaction.outputs[row_idx].amount = v
-                except:
-                    #widget = outputsTable.cellWidget(row_idx, 0)
-                    #widget.setBackgroundRole(QPalette.highlight())
-                    pass
-            self.ui.outputSumEdit.setText(str(sum))
-            self.update_fee()
-        elif col == 1:
-            # change address
-            address = outputsTable.item(row, col).text()
-            try:
-                self.transaction.outputs[row].scriptpubkey = bytearray()
-                if len(address) == 0:
-                    scheme = ""
-                elif scriptVM.address_is_testnet(address) and not testnet:
-                    scheme = "ERROR: address is testnet, network is mainnet"
-                elif scriptVM.address_is_mainnet(address) and testnet:
-                    scheme = "ERROR: address is mainnet, network is testnet"
-                else:
-                    address_type = scriptVM.address_type(address)
-                    if address_type == scriptVM.P2PKH:
-                        scheme = "P2PKH"
-                        bin_address = Base58.check_decode(address)[1:]
-                        self.transaction.outputs[row].scriptpubkey = scriptVM.make_P2PKH_scriptpubkey(bin_address)
-                    elif address_type == scriptVM.P2SH:
-                        scheme = "P2SH"
-                        # TODO
-                    elif address_type == scriptVM.P2MS:
-                        scheme = "P2MS"
-                        # TODO
-                    elif address_type == scriptVM.P2WPKH:
-                        scheme = "P2WPKH"
-                        bin_address = bytes(bech32.decode('tb' if testnet else 'bc', address)[1])
-                        self.transaction.outputs[row].scriptpubkey = scriptVM.make_P2PWPKH_scriptpubkey(bin_address)
-                    elif address_type == scriptVM.P2WSH:
-                        scheme = "P2WSH"
-                        # TODO
-                    elif address_type == scriptVM.P2TR:
-                        scheme = "P2TR"
-                        # TODO
-                    else:
-                        scheme = "ERROR: unknown address type"
-            except ValueError as e:
-                scheme = "Bad base58 checksum"
-            outputsTable.setItem(row, 2, QTableWidgetItem(scheme))
-        else:
-            return
-        self.ui.broadcastPushButton.setEnabled(False)
-        self.update_inputs_view()
-        self.update_size()
-
     def add_output(self):
-        outputTable = self.ui.outputsTableWidget
-        outputTable.insertRow(outputTable.rowCount())
         self.transaction.outputs.append(transactions.TxOutput())
         self.ui.broadcastPushButton.setEnabled(False)
         self.update_inputs_view()
+        self.update_outputs_view()
         self.update_size()
 
     def del_output(self):
-        outputsTable = self.ui.outputsTableWidget
-        selected_indexes = list(set([qmi.row() for qmi in outputsTable.selectedIndexes()]))
-        selected_indexes.sort()
+        selected_indexes = list(set([qmi.row() for qmi in self.ui.outputsView.selectedIndexes()]))
         for idx in selected_indexes[::-1]:
-            outputsTable.removeRow(idx)
             del self.transaction.outputs[idx]
 
         self.ui.broadcastPushButton.setEnabled(False)
         self.update_inputs_view()
+        self.update_outputs_view()
         self.update_fee()
         self.update_size()
 
-
     def update_inputs_view(self):
+        col = self.ui.inputsView.horizontalScrollBar().value()
+        row = self.ui.inputsView.  verticalScrollBar().value()
+        print("col", col)
+
+        model = self.ui.inputsView.model()
         self.ui.inputsView.setModel(None)
-        self.ui.inputsView.setModel(self.inputs_view_model)
+        self.ui.inputsView.setModel(model)
         self.ui.inputsView.resizeColumnsToContents()
 
+        self.ui.inputsView.horizontalScrollBar().setValue(col)
+        self.ui.inputsView.  verticalScrollBar().setValue(row)
+
+    def update_outputs_view(self):
+        col = self.ui.outputsView.horizontalScrollBar().value()
+        row = self.ui.outputsView.  verticalScrollBar().value()
+        print("col", col)
+
+        model = self.ui.outputsView.model()
+        self.ui.outputsView.setModel(None)
+        self.ui.outputsView.setModel(model)
+        self.ui.outputsView.resizeColumnsToContents()
+
+        self.ui.outputsView.horizontalScrollBar().setValue(col)
+        self.ui.outputsView.  verticalScrollBar().setValue(row)
 
     def add_inputs(self):
         j = json.dumps(util.to_dict(self.wallets))
@@ -1014,10 +1062,13 @@ class MainWindow(QMainWindow):
 
     def clear(self):
         self.transaction = transactions.Transaction()
-        self.inputs_view_model = InputsTableModel(self.transaction.inputs)
+        self.ui. inputsView.setModel(InputsTableModel(self.transaction. inputs))
+        self.ui. inputsView.model().dataChanged.connect(self.update_inputs_view)
+        self.ui.outputsView.setModel(OutputsTableModel(self.transaction.outputs))
+        self.ui.outputsView.model().dataChanged.connect(self.update_outputs_view)
 
-        self.ui.outputsTableWidget.setRowCount(0)
         self.update_inputs_view()
+        self.update_outputs_view()
         self.update_fee()
         self.update_size()
 

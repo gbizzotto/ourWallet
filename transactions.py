@@ -127,7 +127,12 @@ class TxOutput:
         # self.txid
         # self.vout
         def __init__(self):
-            pass
+            self.wallet_name = None
+            self.address     = None
+            self.derivation  = None
+            self.spent       = None
+            self.txid        = None
+            self.vout        = None
         @classmethod
         def from_dict(cls, d):
             c = cls()
@@ -138,6 +143,7 @@ class TxOutput:
     def __init__(self):
         self.amount = 0
         self.scriptpubkey = bytearray()
+        self.metadata = self.Metadata()
 
     def eq(self, other):
         return self.metadata.txid == other.metadata.txid and self.metadata.vout == other.metadata.vout

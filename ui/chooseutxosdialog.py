@@ -52,7 +52,7 @@ class Ui_ChooseUTXOsDialog(object):
         self.UTXOsTableWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         self.UTXOsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.UTXOsTableWidget.setSortingEnabled(True)
-        self.UTXOsTableWidget.horizontalHeader().setVisible(False)
+        self.UTXOsTableWidget.horizontalHeader().setVisible(True)
         self.UTXOsTableWidget.horizontalHeader().setStretchLastSection(True)
         self.UTXOsTableWidget.verticalHeader().setVisible(False)
 
