@@ -11,10 +11,10 @@ import ecdsa
 import ourCrypto
 import scriptVM
 
-SIGHASH_ALL    = 1
-SIGHASH_NONE   = 2
-SIGHASH_SINGLE = 3
-SIGHASH_ANYONECANPAY = 0x80
+SIGHASH_ALL    = 1 # outputs locked
+SIGHASH_NONE   = 2 # outputs open
+SIGHASH_SINGLE = 3 # outputs not mine
+SIGHASH_ANYONECANPAY = 0x80 # inputs locked/open
 
 class TxByteStream:
     def __init__(self, bytearray):
@@ -411,6 +411,7 @@ class Transaction:
         for input in tx_copy.inputs:
             input.scriptsig = bytearray()
         tx_copy.inputs[vin].scriptsig = subscript
+        # TODO: filter subscript. check the rules
 
         if sighash_type&3 == SIGHASH_ALL:
             pass
@@ -453,6 +454,8 @@ class Transaction:
         if vin >= len(self.inputs):
             return None
         input = self.inputs[vin]
+        if not input.scriptsig or len(input.scriptsig) == 0:
+            return None
         script_type = scriptVM.identify_scriptpubkey(input.txoutput.scriptpubkey)
 
         if script_type == scriptVM.P2PK:

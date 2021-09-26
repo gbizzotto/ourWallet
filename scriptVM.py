@@ -63,6 +63,15 @@ def make_P2PKH_scriptpubkey(bin_address):
 def make_P2PWPKH_scriptpubkey(bin_address):
     return bytes([0x00, len(bin_address)]) + bin_address
 
+def contains_anyonecanpay_sighash(scriptsig):
+    script_elements = ScriptByteStream(scriptsig).read_all()
+    for elm in script_elements:
+        if len(elm) > 70 and elm[0] == 0x30:
+            # probably a signature
+            if elm[-1] & transactions.SIGHASH_ANYONECANPAY == 0:
+                return True
+    return False
+
 class ScriptByteStream:
     def __init__(self, bytes_buffer):
         self.buffer = bytes_buffer

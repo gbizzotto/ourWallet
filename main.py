@@ -33,9 +33,9 @@ auto_import("qrcode")
 auto_import("bip39")
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox
-from PySide6.QtCore import QFile, QIODevice, Qt, QSize, QDateTime
+from PySide6.QtCore import QFile, QIODevice, Qt, QSize, QDateTime, QAbstractTableModel, QModelIndex
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtGui import QPixmap, QPalette
+from PySide6.QtGui import QPixmap, QPalette, QBrush, QColor
 
 # local imports
 
@@ -545,6 +545,103 @@ class ChooseUTXOsDialog(QDialog):
             utxoTable.setItem(row_idx, 1, QTableWidgetItem("Unconfirmed"))
 
 
+class InputsTableModel(QAbstractTableModel):
+    def __init__(self, inputs):
+        QAbstractTableModel.__init__(self)
+        self.inputs = inputs
+        self.columns = ["signed", "sequence", "amount", "wallet", "confirmations", "derivation", "address"]
+
+    def set_selected(self, selected_rows_set):
+        self.all_rows_affected = False
+        for input in self.inputs:
+            if scriptVM.contains_anyonecanpay_sighash(input.scriptsig):
+                self.all_rows_affected = True
+                break
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self.inputs)
+    def columnCount(self, parent=QModelIndex()):
+        return len(self.columns)
+    def headerData(self, section, orientation, role):
+        if role != Qt.DisplayRole:
+            return None
+        if orientation == Qt.Horizontal:
+            return self.columns[section]
+        else:
+            return "{}".format(section)
+    def setData(self, index, value, role):
+        if not index.isValid():
+            return False
+        if role != Qt.EditRole:
+            return False
+        row = index.row()
+        if row < 0 or row >= len(self.inputs):
+            return False
+        column = index.column()
+        if column != 1:
+            return False
+        self.inputs[row].sequence = int(value)
+        self.dataChanged.emit(index, index)
+        return True
+    def flags(self, index):
+        f = super(self.__class__,self).flags(index)
+        f |= Qt.ItemIsSelectable
+        f |= Qt.ItemIsEnabled
+        if index.column() == 1:
+            f |= Qt.ItemIsEditable
+        return f
+    def data(self, index, role=Qt.DisplayRole):
+        column = index.column()
+        row    = index.row()
+        if role == Qt.DisplayRole or role == Qt.EditRole:
+            input = self.inputs[row]
+            if column == 0:
+                verification = input.parent_tx.verify(row)
+                if verification is None:
+                    return ""
+                elif verification == True:
+                    return "Yes"
+                else:
+                    return "ERROR"
+            elif column == 1:
+                return "{}".format(input.sequence)
+            elif column == 2:
+                return "{}".format(input.txoutput.amount)
+            elif column == 3:
+                if input.txoutput and input.txoutput.metadata and input.txoutput.metadata.wallet_name:
+                    return input.txoutput.metadata.wallet_name
+                else:
+                    return ""
+            elif column == 4:
+                if input.txoutput and input.txoutput.parent_tx.metadata and input.txoutput.parent_tx.metadata.height:
+                    current_height = explorer.get_current_height(testnet)
+                    return "{}".format(1 + current_height - input.txoutput.parent_tx.metadata.height)
+                else:
+                    return "Unconfirmed"
+            elif column == 5:
+                if input.txoutput and input.txoutput.metadata and input.txoutput.metadata.derivation:
+                    return "{}".format(input.txoutput.metadata.derivation)
+                else:
+                    return ""
+            elif column == 6:
+                if input.txoutput and input.txoutput.metadata and input.txoutput.metadata.address:
+                    return input.txoutput.metadata.address
+                else:
+                    return ""
+        elif role == Qt.BackgroundRole:
+            if column == 1:
+                return QColor.fromRgb(255,255,255)
+            return QColor.fromRgb(245,245,245)
+        elif role == Qt.TextAlignmentRole:
+            if column in [1,2,4]:
+                return int(Qt.AlignVCenter | Qt.AlignRight)
+            elif column == 0:
+                return int(Qt.AlignVCenter | Qt.AlignCenter)
+            else:
+                return int(Qt.AlignVCenter | Qt.AlignLeft)
+        return None
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -554,14 +651,14 @@ class MainWindow(QMainWindow):
         self.ui.actionLoad_from_xprv .triggered.connect(self.add_wallet_from_xprv )
         self.ui.actionNew_HD         .triggered.connect(self.create_words_wallet  )
         self.ui.actionOpen           .triggered.connect(self.open_wallet_file     )
-        self.ui.    addUTXOsPushButton.clicked.connect(self.add_utxos    )
-        self.ui.      removeUTXOButton.clicked.connect(self.del_utxos    )
+        self.ui.   addInputsPushButton.clicked.connect(self.add_inputs   )
+        self.ui.    removeInputsButton.clicked.connect(self.del_inputs   )
         self.ui.   addOutputPushButton.clicked.connect(self.add_output   )
         self.ui.removeOutputPushButton.clicked.connect(self.del_output   )
         self.ui.     signAllPUshButton.clicked.connect(self.sign_all_mine)
+        self.ui.         signOneButton.clicked.connect(lambda: self.sign_selected(transactions.SIGHASH_ALL))
         self.ui.      verifyPushButton.clicked.connect(self.verify       )
         self.ui.      exportPushButton.clicked.connect(self.export       )
-        self.ui.            signButton.clicked.connect(self.sign_selected)
         self.ui.   broadcastPushButton.clicked.connect(self.broadcast    )
         self.ui.           clearButton.clicked.connect(self.clear        )
         self.ui.PreventFeeSnipingCheckBox.toggled.connect(self.prevent_fee_sniping_toggled)
@@ -571,21 +668,19 @@ class MainWindow(QMainWindow):
 
         self.ui.broadcastPushButton.setEnabled(False)
 
-        utxoTable = self.ui.UTXOsTableWidget
-        utxo_columns_titles = ["Signed", "sequence", "amount", "wallet", "confirmations", "derivation", "address"]
-        utxoTable.setColumnCount(len(utxo_columns_titles))
-        utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
-
         outputsTable = self.ui.outputsTableWidget
         outputs_columns_titles = ["Amount", "Address", "ScriptPubKey type"]
         outputsTable.setColumnCount(len(outputs_columns_titles))
         outputsTable.setHorizontalHeaderLabels(outputs_columns_titles)
 
-        utxoTable.cellChanged.connect(self.input_changed)
         outputsTable.cellChanged.connect(self.output_changed)
 
         self.wallets = {}
         self.transaction = transactions.Transaction()
+
+        self.inputs_view_model = InputsTableModel(self.transaction.inputs)
+        self.ui.inputsView.setModel(self.inputs_view_model)
+        self.ui.inputsView.clicked.connect(self.selected_inputs_changed)
 
         #unix_time = int(QDateTime.currentDateTime().toMSecsSinceEpoch()/1000)
         self.transaction.locktime = 0
@@ -593,6 +688,25 @@ class MainWindow(QMainWindow):
 
         self.transaction_fee = 0
         self.transaction_virtual_size = 0
+
+        m = QMenu(self)
+        a = m.addAction("with SIGHASH_ALL (inputs locked, outputs locked: standard)")
+        a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_ALL))
+        a = m.addAction("with SIGHASH_NONE (inputs locked, ouptuts not mine: blank check)")
+        a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_NONE))
+        a = m.addAction("with SIGHASH_SINGLE (inputs locked, one output mine others open)")
+        a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_SINGLE))
+        a = m.addAction("with ANYONECANPAY and SIGHASH_ALL, (inputs open, outputs locked: crowdfunding)")
+        a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_ALL    | transactions.SIGHASH_ANYONECANPAY))
+        a = m.addAction("with ANYONECANPAY and SIGHASH_NONE, (inputs open, outputs not mine: blank check)")
+        a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_NONE   | transactions.SIGHASH_ANYONECANPAY))
+        a = m.addAction("with ANYONECANPAY and SIGHASH_ONE, (inputs open, one output mine: coin mixing)")
+        a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_SINGLE | transactions.SIGHASH_ANYONECANPAY))
+        self.ui.signOneButton.setMenu(m)
+
+    def selected_inputs_changed(self, index):
+        selected_indexes = set([x.row() for x in self.ui.inputsView.selectedIndexes()])
+        self.inputs_view_model.set_selected(selected_indexes)
 
     def locktime_datetime_changed(self):
         if self.propagate_locktime_change == False:
@@ -606,6 +720,9 @@ class MainWindow(QMainWindow):
         self.propagate_locktime_change = False
         self.ui.locktimeLineEdit.setText(str(unix_time))
         self.propagate_locktime_change = True
+
+        self.ui.broadcastPushButton.setEnabled(False)
+        self.update_inputs_view()
 
     def locktime_changed(self):
         if self.propagate_locktime_change == False:
@@ -635,6 +752,7 @@ class MainWindow(QMainWindow):
         self.propagate_locktime_change = True
 
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_inputs_view()
 
     def prevent_fee_sniping_toggled(self):
         checked = self.ui.PreventFeeSnipingCheckBox.isChecked()
@@ -646,7 +764,9 @@ class MainWindow(QMainWindow):
             #self.ui.dateTimeEdit.setDateTime(QDateTime.currentDateTime())
         else:
             self.transaction.locktime = int(self.ui.locktimeLineEdit.text())
+
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_inputs_view()
 
     def closeEvent(self,event):
         msg = []
@@ -673,16 +793,14 @@ class MainWindow(QMainWindow):
     def verify_one(self, vin):
         verification = self.transaction.verify(vin)
         if verification is None:
-            msg = ""
+            #msg = ""
             good = False
         elif verification == True:
-            msg = "Yes"
+            #msg = "Yes"
             good = True
         else:
-            msg = "ERROR"
+            #msg = "ERROR"
             good = False
-        self.ui.UTXOsTableWidget.setItem(vin, 0, QTableWidgetItem(msg))
-        self.ui.UTXOsTableWidget.item(vin, 0).setFlags(Qt.ItemIsEditable)
         return good
 
     def verify_all(self):
@@ -695,37 +813,25 @@ class MainWindow(QMainWindow):
         if self.verify_all():
             self.ui.broadcastPushButton.setEnabled(True)
 
-    def sign_selected(self):
-        utxoTable = self.ui.UTXOsTableWidget
-        selected_indexes = set([x.row() for x in utxoTable.selectedIndexes()])
-
+    def sign_selected(self, sighash_type):
+        selected_indexes = set([x.row() for x in self.ui.inputsView.selectedIndexes()])
         for vin in selected_indexes:
-            if False == self.transaction.sign_one(transactions.SIGHASH_ALL, vin, wallets=self.wallets):
+            if False == self.transaction.sign_one(sighash_type, vin, wallets=self.wallets):
                 dialog = PKeyDialog(self.transaction, vin)
                 if dialog.exec():
-                    self.transaction.sign_one(transactions.SIGHASH_ALL, vin, private_key=dialog.key)
+                    self.transaction.sign_one(sighash_type, vin, private_key=dialog.key)
                 else:
                     print("No key for input")
-            self.verify_one(vin)
 
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_inputs_view()
         self.update_size()
 
     def sign_all_mine(self):
         self.transaction.sign_all(self.wallets, transactions.SIGHASH_ALL)
-        self.verify_all()
+        #self.verify_all()
+        self.update_inputs_view()
         self.update_size()
-
-    def input_changed(self, row, col):
-        utxosTable = self.ui.UTXOsTableWidget
-        if col != 1:
-            return
-        sequence = int(utxosTable.item(row, col).text())
-        self.transaction.inputs[row].sequence = sequence
-
-        self.ui.broadcastPushButton.setEnabled(False)        
-        if col == 1:
-            self.update_size()
 
     def output_changed(self, row, col):
         outputsTable = self.ui.outputsTableWidget
@@ -784,6 +890,7 @@ class MainWindow(QMainWindow):
         else:
             return
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_inputs_view()
         self.update_size()
 
     def add_output(self):
@@ -791,6 +898,7 @@ class MainWindow(QMainWindow):
         outputTable.insertRow(outputTable.rowCount())
         self.transaction.outputs.append(transactions.TxOutput())
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_inputs_view()
         self.update_size()
 
     def del_output(self):
@@ -800,60 +908,47 @@ class MainWindow(QMainWindow):
         for idx in selected_indexes[::-1]:
             outputsTable.removeRow(idx)
             del self.transaction.outputs[idx]
-        self.update_fee()
+
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_inputs_view()
+        self.update_fee()
         self.update_size()
 
-    def add_utxos(self):
+
+    def update_inputs_view(self):
+        self.ui.inputsView.setModel(None)
+        self.ui.inputsView.setModel(self.inputs_view_model)
+        self.ui.inputsView.resizeColumnsToContents()
+
+
+    def add_inputs(self):
         j = json.dumps(util.to_dict(self.wallets))
         dialog = ChooseUTXOsDialog(self.wallets)
         if not dialog.exec():
             return
-        utxoTable = self.ui.UTXOsTableWidget
         current_height = explorer.get_current_height(testnet)
         for utxo in dialog.utxos:
             if self.transaction.has(utxo):
                 continue
             vin = self.transaction.add(utxo)
-            input = self.transaction.inputs[vin]
 
-            assert vin == utxoTable.rowCount()
-            utxoTable.insertRow(vin)
-            utxoTable.setItem(vin, 0, QTableWidgetItem(""))
-            utxoTable.setItem(vin, 1, QTableWidgetItem(str(input.sequence)))
-            utxoTable.setItem(vin, 2, QTableWidgetItem(str(utxo.amount)))
-            utxoTable.setItem(vin, 3, QTableWidgetItem(utxo.metadata.wallet_name))
-            if utxo.parent_tx.metadata.height:
-                utxoTable.setItem(vin, 4, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
-            else:
-                utxoTable.setItem(vin, 4, QTableWidgetItem("Unconfirmed"))
-            utxoTable.setItem(vin, 5, QTableWidgetItem(utxo.metadata.derivation))
-            utxoTable.setItem(vin, 6, QTableWidgetItem(utxo.metadata.address))
-            utxoTable.item(vin, 0).setFlags(Qt.ItemIsEditable)
-            utxoTable.item(vin, 2).setFlags(Qt.ItemIsEditable)
-            utxoTable.item(vin, 3).setFlags(Qt.ItemIsEditable)
-            utxoTable.item(vin, 4).setFlags(Qt.ItemIsEditable)
-            utxoTable.item(vin, 5).setFlags(Qt.ItemIsEditable)
-            utxoTable.item(vin, 6).setFlags(Qt.ItemIsEditable)
-
-        utxoTable.resizeColumnsToContents()
-        self.update_fee()
         self.ui.broadcastPushButton.setEnabled(False)
-        #self.update_size()
+        self.update_inputs_view()
+        self.update_fee()
+        self.update_size()
 
-    def del_utxos(self):
-        utxoTable = self.ui.UTXOsTableWidget
-        selected_indexes = list(set([qmi.row() for qmi in utxoTable.selectedIndexes()]))
-        selected_indexes.sort()
+    def del_inputs(self):
+        selected_indexes = list(set([x.row() for x in self.ui.inputsView.selectedIndexes()]))
         for idx in selected_indexes[::-1]:
-            utxoTable.removeRow(idx)
             del self.transaction.inputs[idx]
-        self.update_fee()
+
         self.ui.broadcastPushButton.setEnabled(False)
+        self.update_inputs_view()
+        self.update_fee()
         self.update_size()
 
     def update_fee(self):
-        input_total = sum([utxo.txoutput.amount for utxo in self.transaction.inputs])
+        input_total = sum([input.txoutput.amount for input in self.transaction.inputs])
         output_total = sum([out.amount for out in self.transaction.outputs])
         self.transaction_fee = input_total - output_total
         self.ui.inputSumEdit.setText(str(input_total))
@@ -869,7 +964,7 @@ class MainWindow(QMainWindow):
 
     def update_fee_per_byte(self):
         if self.transaction_virtual_size == 0:
-            feePerByteEdit.setText("")
+            self.ui.feePerByteEdit.setText("")
             return
         fee_per_byte = self.transaction_fee / self.transaction_virtual_size
         self.ui.feePerByteEdit.setText(str(fee_per_byte))
@@ -919,8 +1014,10 @@ class MainWindow(QMainWindow):
 
     def clear(self):
         self.transaction = transactions.Transaction()
-        self.ui.UTXOsTableWidget.setRowCount(0)
+        self.inputs_view_model = InputsTableModel(self.transaction.inputs)
+
         self.ui.outputsTableWidget.setRowCount(0)
+        self.update_inputs_view()
         self.update_fee()
         self.update_size()
 

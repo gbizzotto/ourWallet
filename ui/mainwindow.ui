@@ -31,21 +31,30 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_11">
              <item>
-              <widget class="QPushButton" name="addUTXOsPushButton">
+              <widget class="QPushButton" name="addInputsPushButton">
                <property name="text">
                 <string>Add</string>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="signButton">
+              <widget class="QToolButton" name="signOneButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="text">
                 <string>Sign selected</string>
+               </property>
+               <property name="popupMode">
+                <enum>QToolButton::MenuButtonPopup</enum>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="removeUTXOButton">
+              <widget class="QPushButton" name="removeInputsButton">
                <property name="text">
                 <string>Remove</string>
                </property>
@@ -54,19 +63,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QTableWidget" name="UTXOsTableWidget">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="sizeAdjustPolicy">
-              <enum>QAbstractScrollArea::AdjustIgnored</enum>
-             </property>
-             <property name="alternatingRowColors">
-              <bool>true</bool>
-             </property>
+            <widget class="QTableView" name="inputsView">
              <property name="selectionMode">
               <enum>QAbstractItemView::MultiSelection</enum>
              </property>
@@ -76,7 +73,7 @@
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>true</bool>
              </attribute>
-             <attribute name="verticalHeaderVisible">
+             <attribute name="verticalHeaderStretchLastSection">
               <bool>false</bool>
              </attribute>
             </widget>

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'mainwindow.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.1.2
+## Created by: Qt User Interface Compiler version 6.1.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -47,39 +47,38 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.horizontalLayout_11 = QHBoxLayout()
         self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
-        self.addUTXOsPushButton = QPushButton(self.UTXOsGroupBox)
-        self.addUTXOsPushButton.setObjectName(u"addUTXOsPushButton")
+        self.addInputsPushButton = QPushButton(self.UTXOsGroupBox)
+        self.addInputsPushButton.setObjectName(u"addInputsPushButton")
 
-        self.horizontalLayout_11.addWidget(self.addUTXOsPushButton)
+        self.horizontalLayout_11.addWidget(self.addInputsPushButton)
 
-        self.signButton = QPushButton(self.UTXOsGroupBox)
-        self.signButton.setObjectName(u"signButton")
+        self.signOneButton = QToolButton(self.UTXOsGroupBox)
+        self.signOneButton.setObjectName(u"signOneButton")
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.signOneButton.sizePolicy().hasHeightForWidth())
+        self.signOneButton.setSizePolicy(sizePolicy)
+        self.signOneButton.setPopupMode(QToolButton.MenuButtonPopup)
 
-        self.horizontalLayout_11.addWidget(self.signButton)
+        self.horizontalLayout_11.addWidget(self.signOneButton)
 
-        self.removeUTXOButton = QPushButton(self.UTXOsGroupBox)
-        self.removeUTXOButton.setObjectName(u"removeUTXOButton")
+        self.removeInputsButton = QPushButton(self.UTXOsGroupBox)
+        self.removeInputsButton.setObjectName(u"removeInputsButton")
 
-        self.horizontalLayout_11.addWidget(self.removeUTXOButton)
+        self.horizontalLayout_11.addWidget(self.removeInputsButton)
 
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_11)
 
-        self.UTXOsTableWidget = QTableWidget(self.UTXOsGroupBox)
-        self.UTXOsTableWidget.setObjectName(u"UTXOsTableWidget")
-        sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.UTXOsTableWidget.sizePolicy().hasHeightForWidth())
-        self.UTXOsTableWidget.setSizePolicy(sizePolicy)
-        self.UTXOsTableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustIgnored)
-        self.UTXOsTableWidget.setAlternatingRowColors(True)
-        self.UTXOsTableWidget.setSelectionMode(QAbstractItemView.MultiSelection)
-        self.UTXOsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.UTXOsTableWidget.horizontalHeader().setStretchLastSection(True)
-        self.UTXOsTableWidget.verticalHeader().setVisible(False)
+        self.inputsView = QTableView(self.UTXOsGroupBox)
+        self.inputsView.setObjectName(u"inputsView")
+        self.inputsView.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.inputsView.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.inputsView.horizontalHeader().setStretchLastSection(True)
+        self.inputsView.verticalHeader().setStretchLastSection(False)
 
-        self.verticalLayout_4.addWidget(self.UTXOsTableWidget)
+        self.verticalLayout_4.addWidget(self.inputsView)
 
 
         self.horizontalLayout_2.addWidget(self.UTXOsGroupBox)
@@ -108,8 +107,11 @@ class Ui_MainWindow(object):
 
         self.outputsTableWidget = QTableWidget(self.outputsGroupBox)
         self.outputsTableWidget.setObjectName(u"outputsTableWidget")
-        sizePolicy.setHeightForWidth(self.outputsTableWidget.sizePolicy().hasHeightForWidth())
-        self.outputsTableWidget.setSizePolicy(sizePolicy)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.outputsTableWidget.sizePolicy().hasHeightForWidth())
+        self.outputsTableWidget.setSizePolicy(sizePolicy1)
         self.outputsTableWidget.setAlternatingRowColors(True)
         self.outputsTableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.outputsTableWidget.horizontalHeader().setStretchLastSection(True)
@@ -127,11 +129,11 @@ class Ui_MainWindow(object):
         self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
         self.widget_4 = QWidget(self.centralwidget)
         self.widget_4.setObjectName(u"widget_4")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.widget_4.sizePolicy().hasHeightForWidth())
-        self.widget_4.setSizePolicy(sizePolicy1)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.widget_4.sizePolicy().hasHeightForWidth())
+        self.widget_4.setSizePolicy(sizePolicy2)
 
         self.horizontalLayout_9.addWidget(self.widget_4)
 
@@ -148,8 +150,8 @@ class Ui_MainWindow(object):
 
         self.widget_3 = QWidget(self.centralwidget)
         self.widget_3.setObjectName(u"widget_3")
-        sizePolicy1.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
-        self.widget_3.setSizePolicy(sizePolicy1)
+        sizePolicy2.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
+        self.widget_3.setSizePolicy(sizePolicy2)
 
         self.horizontalLayout_9.addWidget(self.widget_3)
 
@@ -160,8 +162,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
         self.widget_5 = QWidget(self.centralwidget)
         self.widget_5.setObjectName(u"widget_5")
-        sizePolicy1.setHeightForWidth(self.widget_5.sizePolicy().hasHeightForWidth())
-        self.widget_5.setSizePolicy(sizePolicy1)
+        sizePolicy2.setHeightForWidth(self.widget_5.sizePolicy().hasHeightForWidth())
+        self.widget_5.setSizePolicy(sizePolicy2)
 
         self.horizontalLayout_10.addWidget(self.widget_5)
 
@@ -178,8 +180,8 @@ class Ui_MainWindow(object):
 
         self.widget_6 = QWidget(self.centralwidget)
         self.widget_6.setObjectName(u"widget_6")
-        sizePolicy1.setHeightForWidth(self.widget_6.sizePolicy().hasHeightForWidth())
-        self.widget_6.setSizePolicy(sizePolicy1)
+        sizePolicy2.setHeightForWidth(self.widget_6.sizePolicy().hasHeightForWidth())
+        self.widget_6.setSizePolicy(sizePolicy2)
 
         self.horizontalLayout_10.addWidget(self.widget_6)
 
@@ -264,33 +266,33 @@ class Ui_MainWindow(object):
 
         self.widget_2 = QWidget(self.centralwidget)
         self.widget_2.setObjectName(u"widget_2")
-        sizePolicy2 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
-        self.widget_2.setSizePolicy(sizePolicy2)
+        sizePolicy3 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
+        self.widget_2.setSizePolicy(sizePolicy3)
 
         self.gridLayout.addWidget(self.widget_2, 0, 4, 1, 1)
 
         self.locktimeLineEdit = QLineEdit(self.centralwidget)
         self.locktimeLineEdit.setObjectName(u"locktimeLineEdit")
         self.locktimeLineEdit.setEnabled(True)
-        sizePolicy3 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy3.setHorizontalStretch(0)
-        sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.locktimeLineEdit.sizePolicy().hasHeightForWidth())
-        self.locktimeLineEdit.setSizePolicy(sizePolicy3)
+        sizePolicy4 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.locktimeLineEdit.sizePolicy().hasHeightForWidth())
+        self.locktimeLineEdit.setSizePolicy(sizePolicy4)
 
         self.gridLayout.addWidget(self.locktimeLineEdit, 0, 1, 1, 1)
 
         self.dateTimeEdit = QDateTimeEdit(self.centralwidget)
         self.dateTimeEdit.setObjectName(u"dateTimeEdit")
         self.dateTimeEdit.setEnabled(True)
-        sizePolicy4 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
-        self.dateTimeEdit.setSizePolicy(sizePolicy4)
+        sizePolicy5 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
+        self.dateTimeEdit.setSizePolicy(sizePolicy5)
         self.dateTimeEdit.setMinimumSize(QSize(200, 0))
         self.dateTimeEdit.setDateTime(QDateTime(QDate(2033, 5, 18), QTime(3, 40, 0)))
         self.dateTimeEdit.setCalendarPopup(True)
@@ -311,8 +313,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.widget = QWidget(self.centralwidget)
         self.widget.setObjectName(u"widget")
-        sizePolicy2.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
-        self.widget.setSizePolicy(sizePolicy2)
+        sizePolicy3.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy3)
 
         self.horizontalLayout_3.addWidget(self.widget)
 
@@ -388,9 +390,9 @@ class Ui_MainWindow(object):
         self.actionWallets.setText(QCoreApplication.translate("MainWindow", u"Wallets", None))
         self.actionOpen.setText(QCoreApplication.translate("MainWindow", u"Open...", None))
         self.UTXOsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"UTXOs", None))
-        self.addUTXOsPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
-        self.signButton.setText(QCoreApplication.translate("MainWindow", u"Sign selected", None))
-        self.removeUTXOButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
+        self.addInputsPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
+        self.signOneButton.setText(QCoreApplication.translate("MainWindow", u"Sign selected", None))
+        self.removeInputsButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
         self.outputsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"Outputs", None))
         self.addOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
         self.removeOutputPushButton.setText(QCoreApplication.translate("MainWindow", u"Remove", None))
