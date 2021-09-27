@@ -48,13 +48,15 @@ def address_is_mainnet(address):
     return address[0] == "1" or address[0] == '3' or address[0:4] == "bc1q" or address[0:4] == "bc1p"
 
 def address_type(address):
+    if len(address) == 0:
+        return None
     if address[0] == '1' or address[0] == "m" or address[0] == "n":
         return P2PKH
-    elif address[0] == '3' or address[0] == '2':
+    if address[0] == '3' or address[0] == '2':
         return P2SH
-    elif address[:4] == 'bc1q' or address[:4] == 'tb1q':
+    if address[:4] == 'bc1q' or address[:4] == 'tb1q':
         return P2WPKH
-    elif address[:4] == 'bc1p' or address[:4] == 'tb1p':
+    if address[:4] == 'bc1p' or address[:4] == 'tb1p':
         return P2TR
 
 def make_P2PKH_scriptpubkey(bin_address):
@@ -62,6 +64,10 @@ def make_P2PKH_scriptpubkey(bin_address):
 
 def make_P2PWPKH_scriptpubkey(bin_address):
     return bytes([0x00, len(bin_address)]) + bin_address
+
+def get_signatures_sighashes(scriptsig):
+    script_elements = ScriptByteStream(scriptsig).read_all()
+    return [elm[-1] for elm in script_elements if len(elm) > 70 and elm[0] == 0x30]
 
 def contains_anyonecanpay_sighash(scriptsig):
     script_elements = ScriptByteStream(scriptsig).read_all()

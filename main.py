@@ -33,7 +33,7 @@ auto_import("qrcode")
 auto_import("bip39")
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox, QAbstractItemView
-from PySide6.QtCore import QFile, QIODevice, Qt, QSize, QDateTime, QAbstractTableModel, QModelIndex
+from PySide6.QtCore import QFile, QIODevice, Qt, QSize, QDateTime, QAbstractTableModel, QModelIndex, QItemSelectionModel, SIGNAL
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QPixmap, QPalette, QBrush, QColor
 
@@ -550,14 +550,12 @@ class InputsTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self)
         self.inputs = inputs
         self.columns = ["signed", "sequence", "amount", "wallet", "confirmations", "derivation", "address"]
-
-    def set_selected(self, selected_rows_set):
-        self.all_rows_affected = False
-        for input in self.inputs:
-            if scriptVM.contains_anyonecanpay_sighash(input.scriptsig):
-                self.all_rows_affected = True
-                break
-
+        self.affected_rows = set()
+    def set_affected_rows(self, affected_rows_set):
+        self.affected_rows = affected_rows_set
+        self.dataChanged.emit(self.index(0,0), self.index(len(self.inputs), len(self.columns)))
+    def update(self):
+        self.dataChanged.emit(self.index(0,0), self.index(len(self.inputs), len(self.columns)))
     def rowCount(self, parent=QModelIndex()):
         return len(self.inputs)
     def columnCount(self, parent=QModelIndex()):
@@ -629,9 +627,10 @@ class InputsTableModel(QAbstractTableModel):
                 else:
                     return ""
         elif role == Qt.BackgroundRole:
+            darker = 40 if row in self.affected_rows else 0
             if column == 1:
-                return QColor.fromRgb(255,255,255)
-            return QColor.fromRgb(245,245,245)
+                return QColor.fromRgb(255-darker,255-darker,255)
+            return QColor.fromRgb(245-darker,245-darker,245)
         elif role == Qt.TextAlignmentRole:
             if column in [1,2,4]:
                 return int(Qt.AlignVCenter | Qt.AlignRight)
@@ -646,7 +645,10 @@ class OutputsTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self)
         self.outputs = outputs
         self.columns = ["Amount", "Address", "ScriptPubKey type"]
-
+        self.affected_rows = set()
+    def set_affected_rows(self, affected_rows_set):
+        self.affected_rows = affected_rows_set
+        self.dataChanged.emit(self.index(0,0), self.index(len(self.outputs), len(self.columns)))
     def rowCount(self, parent=QModelIndex()):
         return len(self.outputs)
     def columnCount(self, parent=QModelIndex()):
@@ -686,6 +688,8 @@ class OutputsTableModel(QAbstractTableModel):
                 output.scriptpubkey = scriptVM.make_P2PWPKH_scriptpubkey(bin_address)
             # TODO elif address_type == scriptVM.P2WSH:
             # TODO elif address_type == scriptVM.P2TR:
+            else:
+                output.scriptpubkey = bytearray()
         self.dataChanged.emit(index, index)
         return True
     def flags(self, index):
@@ -732,6 +736,11 @@ class OutputsTableModel(QAbstractTableModel):
                         return "P2TR"
                     else:
                         return "ERROR: unknown address type"
+        elif role == Qt.BackgroundRole:
+            darker = 40 if row in self.affected_rows else 0
+            if column in [0,1]:
+                return QColor.fromRgb(255-darker,255-darker,255)
+            return QColor.fromRgb(245-darker,245-darker,245)
         elif role == Qt.TextAlignmentRole:
             if column == 0:
                 return int(Qt.AlignVCenter | Qt.AlignRight)
@@ -768,11 +777,11 @@ class MainWindow(QMainWindow):
         self.transaction = transactions.Transaction()
 
         self.ui.inputsView.setModel(InputsTableModel(self.transaction.inputs))
-        self.ui.inputsView.clicked.connect(self.selected_inputs_changed)
-        self.ui.inputsView.model().dataChanged.connect(self.update_inputs_view)
+        self.ui.inputsView.selectionModel().selectionChanged.connect(self.selected_inputs_changed)
+        self.ui.inputsView.model().dataChanged.connect(self.inputs_changed)
 
         self.ui.outputsView.setModel(OutputsTableModel(self.transaction.outputs))
-        self.ui.outputsView.model().dataChanged.connect(self.update_outputs_view)
+        self.ui.outputsView.model().dataChanged.connect(self.outputs_changed)
 
         #unix_time = int(QDateTime.currentDateTime().toMSecsSinceEpoch()/1000)
         self.transaction.locktime = 0
@@ -796,9 +805,39 @@ class MainWindow(QMainWindow):
         a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_SINGLE | transactions.SIGHASH_ANYONECANPAY))
         self.ui.signOneButton.setMenu(m)
 
+    #def store_current_selection(self, newSelection, oldSelection):
+    #    print("changed")
+    #    #self.model().selection_changed(newSelection)
+
+    def get_affected_inout(self, input_idxs_set):
+        all_inputs  = False
+        all_outputs = False
+        affected_inputs = input_idxs_set
+        affected_outputs = set()
+        for i in input_idxs_set:
+            input = self.transaction.inputs[i]
+            sighashes = scriptVM.get_signatures_sighashes(input.scriptsig)
+            anyonecanpay_sighashes = [s for s in sighashes if (s & transactions.SIGHASH_ANYONECANPAY) == 0]
+            if len(anyonecanpay_sighashes) > 0:
+                affected_inputs = set([idx for idx in range(0, len(self.transaction.inputs))])
+                all_inputs = True
+            for sighash in sighashes:
+                if (sighash & 0xF) == transactions.SIGHASH_ALL:
+                    affected_outputs = set([idx for idx in range(0, len(self.transaction.outputs))])
+                    all_outputs = True
+                    break
+                elif (sighash & 0xF) == transactions.SIGHASH_SINGLE:
+                    affected_outputs.add(i)
+            if all_inputs and all_outputs:
+                break
+        return affected_inputs, affected_outputs
+
     def selected_inputs_changed(self, index):
         selected_indexes = set([x.row() for x in self.ui.inputsView.selectedIndexes()])
-        self.ui.inputsView.model().set_selected(selected_indexes)
+        affected_inputs, affected_outputs = self.get_affected_inout(selected_indexes)
+
+        self.ui. inputsView.model().set_affected_rows(affected_inputs)
+        self.ui.outputsView.model().set_affected_rows(affected_outputs)
 
     def locktime_datetime_changed(self):
         if self.propagate_locktime_change == False:
@@ -914,7 +953,7 @@ class MainWindow(QMainWindow):
                     self.transaction.sign_one(sighash_type, vin, private_key=dialog.key)
                 else:
                     print("No key for input")
-
+        self.selected_inputs_changed(None)
         self.ui.broadcastPushButton.setEnabled(False)
         self.update_inputs_view()
         self.update_size()
@@ -925,8 +964,23 @@ class MainWindow(QMainWindow):
         self.update_inputs_view()
         self.update_size()
 
+    def outputs_changed(self):
+        self.ui.outputsView.resizeColumnsToContents()
+        self.ui.inputsView.model().update()
+
+    def update_outputs_view(self):
+        self.ui.outputsView.resizeColumnsToContents()
+
+    def inputs_changed(self):
+        self.ui.inputsView.resizeColumnsToContents()
+
+    def update_inputs_view(self, keep_selection=True):
+        self.ui.inputsView.model().update()
+
     def add_output(self):
+        self.ui.outputsView.model().beginInsertRows(self.ui.outputsView.rootIndex(), len(self.transaction.outputs), len(self.transaction.outputs))
         self.transaction.outputs.append(transactions.TxOutput())
+        self.ui.outputsView.model().endInsertRows()
         self.ui.broadcastPushButton.setEnabled(False)
         self.update_inputs_view()
         self.update_outputs_view()
@@ -935,39 +989,15 @@ class MainWindow(QMainWindow):
     def del_output(self):
         selected_indexes = list(set([qmi.row() for qmi in self.ui.outputsView.selectedIndexes()]))
         for idx in selected_indexes[::-1]:
+            self.ui.outputsView.model().beginRemoveRows(self.ui.outputsView.rootIndex(), idx, idx)
             del self.transaction.outputs[idx]
+            self.ui.outputsView.model().endRemoveRows()
 
         self.ui.broadcastPushButton.setEnabled(False)
         self.update_inputs_view()
         self.update_outputs_view()
         self.update_fee()
         self.update_size()
-
-    def update_inputs_view(self):
-        col = self.ui.inputsView.horizontalScrollBar().value()
-        row = self.ui.inputsView.  verticalScrollBar().value()
-        print("col", col)
-
-        model = self.ui.inputsView.model()
-        self.ui.inputsView.setModel(None)
-        self.ui.inputsView.setModel(model)
-        self.ui.inputsView.resizeColumnsToContents()
-
-        self.ui.inputsView.horizontalScrollBar().setValue(col)
-        self.ui.inputsView.  verticalScrollBar().setValue(row)
-
-    def update_outputs_view(self):
-        col = self.ui.outputsView.horizontalScrollBar().value()
-        row = self.ui.outputsView.  verticalScrollBar().value()
-        print("col", col)
-
-        model = self.ui.outputsView.model()
-        self.ui.outputsView.setModel(None)
-        self.ui.outputsView.setModel(model)
-        self.ui.outputsView.resizeColumnsToContents()
-
-        self.ui.outputsView.horizontalScrollBar().setValue(col)
-        self.ui.outputsView.  verticalScrollBar().setValue(row)
 
     def add_inputs(self):
         j = json.dumps(util.to_dict(self.wallets))
@@ -978,7 +1008,9 @@ class MainWindow(QMainWindow):
         for utxo in dialog.utxos:
             if self.transaction.has(utxo):
                 continue
+            self.ui.inputsView.model().beginInsertRows(self.ui.inputsView.rootIndex(), len(self.transaction.inputs), len(self.transaction.inputs))
             vin = self.transaction.add(utxo)
+            self.ui.inputsView.model().endInsertRows()
 
         self.ui.broadcastPushButton.setEnabled(False)
         self.update_inputs_view()
@@ -988,7 +1020,9 @@ class MainWindow(QMainWindow):
     def del_inputs(self):
         selected_indexes = list(set([x.row() for x in self.ui.inputsView.selectedIndexes()]))
         for idx in selected_indexes[::-1]:
+            self.ui.inputsView.model().beginRemoveRows(self.ui.inputsView.rootIndex(), idx, idx)
             del self.transaction.inputs[idx]
+            self.ui.inputsView.model().endRemoveRows()
 
         self.ui.broadcastPushButton.setEnabled(False)
         self.update_inputs_view()
@@ -1063,9 +1097,10 @@ class MainWindow(QMainWindow):
     def clear(self):
         self.transaction = transactions.Transaction()
         self.ui. inputsView.setModel(InputsTableModel(self.transaction. inputs))
-        self.ui. inputsView.model().dataChanged.connect(self.update_inputs_view)
+        self.ui. inputsView.selectionModel().selectionChanged.connect(self.selected_inputs_changed)
+        self.ui. inputsView.model().dataChanged.connect(self.inputs_changed)
         self.ui.outputsView.setModel(OutputsTableModel(self.transaction.outputs))
-        self.ui.outputsView.model().dataChanged.connect(self.update_outputs_view)
+        self.ui.outputsView.model().dataChanged.connect(self.outputs_changed)
 
         self.update_inputs_view()
         self.update_outputs_view()

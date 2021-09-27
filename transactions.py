@@ -528,6 +528,29 @@ class Transaction:
         for vin in range(0, len(self.inputs)):
             self.sign_one(sighash_type, vin, wallets=wallets)
 
+    def get_affected_inout(self, input_idxs_set):
+        all_inputs  = False
+        all_outputs = False
+        affected_inputs = input_idxs_set
+        affected_outputs = set()
+        for i in input_idxs_set:
+            input = self.inputs[i]
+            sighashes = scriptVM.get_signatures_sighashes(input.scriptsig)
+            anyonecanpay_sighashes = [s for s in sighashes if (s & SIGHASH_ANYONECANPAY) == 0]
+            if len(anyonecanpay_sighashes) > 0:
+                affected_inputs = set([idx for idx in range(0, len(self.inputs))])
+                all_inputs = True
+            for sighash in sighashes:
+                if (sighash & 0xF) == SIGHASH_ALL:
+                    affected_outputs = set([idx for idx in range(0, len(self.outputs))])
+                    all_outputs = True
+                    break
+                elif (sighash & 0xF) == SIGHASH_SINGLE:
+                    affected_outputs.add(i)
+            if all_inputs and all_outputs:
+                break
+        return affected_inputs, affected_outputs
+
     def __repr__(self):
         return json.dumps(util.to_dict(self), indent=2)
 

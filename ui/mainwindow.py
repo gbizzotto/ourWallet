@@ -73,7 +73,7 @@ class Ui_MainWindow(object):
 
         self.inputsView = QTableView(self.UTXOsGroupBox)
         self.inputsView.setObjectName(u"inputsView")
-        self.inputsView.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.inputsView.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.inputsView.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.inputsView.horizontalHeader().setStretchLastSection(True)
         self.inputsView.verticalHeader().setStretchLastSection(False)
@@ -107,6 +107,7 @@ class Ui_MainWindow(object):
 
         self.outputsView = QTableView(self.outputsGroupBox)
         self.outputsView.setObjectName(u"outputsView")
+        self.outputsView.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.outputsView.horizontalHeader().setStretchLastSection(True)
 
         self.verticalLayout_5.addWidget(self.outputsView)
