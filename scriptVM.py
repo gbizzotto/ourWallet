@@ -65,9 +65,12 @@ def make_P2PKH_scriptpubkey(bin_address):
 def make_P2PWPKH_scriptpubkey(bin_address):
     return bytes([0x00, len(bin_address)]) + bin_address
 
-def get_signatures_sighashes(scriptsig):
+def get_signatures(scriptsig):
     script_elements = ScriptByteStream(scriptsig).read_all()
-    return [elm[-1] for elm in script_elements if len(elm) > 70 and elm[0] == 0x30]
+    return [elm for elm in script_elements if len(elm) > 70 and elm[0] == 0x30]
+
+def get_signatures_sighashes(scriptsig):
+    return [elm[-1] for elm in get_signatures(scriptsig)]
 
 def contains_anyonecanpay_sighash(scriptsig):
     script_elements = ScriptByteStream(scriptsig).read_all()

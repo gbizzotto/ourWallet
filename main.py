@@ -790,6 +790,8 @@ class MainWindow(QMainWindow):
         self.transaction_fee = 0
         self.transaction_virtual_size = 0
 
+        self.locktime_changed()
+
         m = QMenu(self)
         a = m.addAction("with SIGHASH_ALL (inputs locked, outputs locked: standard)")
         a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_ALL))
@@ -891,10 +893,11 @@ class MainWindow(QMainWindow):
         self.ui.locktimeLineEdit.setEnabled(not checked)
 
         if checked:
+            self.old_locktime = self.ui.locktimeLineEdit.text()
             self.transaction.locktime = explorer.get_current_height(testnet)
-            #self.ui.dateTimeEdit.setDateTime(QDateTime.currentDateTime())
+            self.ui.locktimeLineEdit.setText(str(self.transaction.locktime))
         else:
-            self.transaction.locktime = int(self.ui.locktimeLineEdit.text())
+            self.ui.locktimeLineEdit.setText(self.old_locktime)
 
         self.ui.broadcastPushButton.setEnabled(False)
         self.update_inputs_view()
@@ -945,6 +948,11 @@ class MainWindow(QMainWindow):
             self.ui.broadcastPushButton.setEnabled(True)
 
     def sign_selected(self, sighash_type):
+        if self.ui.PreventFeeSnipingCheckBox.isChecked():
+            if not self.transaction.has_any_signature():
+                self.transaction.locktime = explorer.get_current_height(testnet)
+                self.ui.locktimeLineEdit.setText(str(self.transaction.locktime))
+
         selected_indexes = set([x.row() for x in self.ui.inputsView.selectedIndexes()])
         for vin in selected_indexes:
             if False == self.transaction.sign_one(sighash_type, vin, wallets=self.wallets):
@@ -959,6 +967,11 @@ class MainWindow(QMainWindow):
         self.update_size()
 
     def sign_all_mine(self):
+        if self.ui.PreventFeeSnipingCheckBox.isChecked():
+            if not self.transaction.has_any_signature():
+                self.transaction.locktime = explorer.get_current_height(testnet)
+                self.ui.locktimeLineEdit.setText(str(self.transaction.locktime))
+
         self.transaction.sign_all(self.wallets, transactions.SIGHASH_ALL)
         #self.verify_all()
         self.update_inputs_view()
@@ -967,12 +980,16 @@ class MainWindow(QMainWindow):
     def outputs_changed(self):
         self.ui.outputsView.resizeColumnsToContents()
         self.ui.inputsView.model().update()
+        self.update_fee()
+        self.update_size()
 
     def update_outputs_view(self):
         self.ui.outputsView.resizeColumnsToContents()
 
     def inputs_changed(self):
         self.ui.inputsView.resizeColumnsToContents()
+        self.update_fee()
+        self.update_size()
 
     def update_inputs_view(self, keep_selection=True):
         self.ui.inputsView.model().update()

@@ -551,6 +551,12 @@ class Transaction:
                 break
         return affected_inputs, affected_outputs
 
+    def has_any_signature(self):
+        for input in self.inputs:
+            if len(scriptVM.get_signatures(input.scriptsig)) > 0:
+                return True
+        return False
+
     def __repr__(self):
         return json.dumps(util.to_dict(self), indent=2)
 
