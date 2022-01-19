@@ -11,7 +11,11 @@ def encrypt(plain_text, key):
 
 def decrypt(enc_text, key):
     key = hashlib.sha256(hashlib.sha256(key).digest()).digest()[:16]
-    return AES.new(key, AES.MODE_CFB, iv).decrypt(enc_text).decode()
+    try:
+        return AES.new(key, AES.MODE_CFB, iv).decrypt(enc_text).decode()
+    except:
+        pass
+    return None
 
 def is_signature_standard(der_signature_bytes):
     der_signature_bytes = bytearray(der_signature_bytes)

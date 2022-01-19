@@ -6,3 +6,4 @@ all:
 	pyside6-uic ui/chooseutxosdialog.ui > ui/chooseutxosdialog.py
 	pyside6-uic ui/privatekeydialog.ui > ui/privatekeydialog.py
 	pyside6-uic ui/createwordswallet.ui > ui/createwordswallet.py
+	pyside6-uic ui/passworddialog.ui > ui/passworddialog.py

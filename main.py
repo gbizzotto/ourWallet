@@ -46,6 +46,7 @@ from ui.walletinfo import Ui_walletInfoDialog
 from ui.chooseutxosdialog import Ui_ChooseUTXOsDialog
 from ui.privatekeydialog import Ui_PKeyDialog
 from ui.createwordswallet import Ui_CreateWordWalletDialog
+from ui.passworddialog import Ui_passwordDialog
 
 import explorer
 import transactions
@@ -80,12 +81,33 @@ def save(wallet, parent_dialog):
             return
         if '.' not in filename:
             filename += ".wlt"
+
+    pw = b""
+    dialog = PasswordDialog(parent_dialog)
+    if dialog.exec():
+        pw = str.encode(dialog.pw)
+    if wallet.pwCheck:
+        if ourCrypto.decrypt(wallet.pwCheck, pw) != "ourPassword":
+            QMessageBox.warning(parent_dialog, "Wrong password", "Wrong password")
+            return
+
     j = json.dumps(wallet.to_dict())
-    bin = ourCrypto.encrypt(j, b"ourPassword")
+    bin = ourCrypto.encrypt(j, pw)
     file = open(filename, 'wb')
     file.write(bin)
     wallet.filename = filename
     wallet.dirty    = False
+
+class PasswordDialog(QDialog):
+    def __init__(self, wallet):
+        super(self.__class__, self).__init__()
+        self.wallet = wallet
+        self.ui = Ui_passwordDialog()
+        self.ui.setupUi(self)
+        self.setWindowTitle("Password")
+    def accept(self):
+        self.pw = self.ui.passwordEdit.text()
+        super(self.__class__, self).accept()
 
 class WalletInfoDialog(QDialog):
     def __init__(self, wallet):
@@ -1072,12 +1094,20 @@ class MainWindow(QMainWindow):
         filename = QFileDialog.getOpenFileName(self, 'Open wallet', filter="Wallet files(*.wlt);;All files(*)")[0]
         if len(filename) == 0:
             return
+        pw = b""
+        dialog = PasswordDialog(self)
+        if dialog.exec():
+            pw = str.encode(dialog.pw)
         file = open(filename, 'rb')
         bin = file.read()
-        j = ourCrypto.decrypt(bin, b"ourPassword")
+        j = ourCrypto.decrypt(bin, pw)
+        if j is None:
+            QMessageBox.warning(self, "Wrong password", "Wrong password")
+            return
         d = json.loads(j)
         w = wallets.from_dict(d)
         w.filename = filename
+        w.pwCheck = ourCrypto.encrypt("ourPassword", pw)
         self.wallets[w.name] = w
         menuaction = self.ui.menuWallets.addAction(w.name)
         menuaction.triggered.connect(lambda:self.menu_action_wallet_name(w.name))

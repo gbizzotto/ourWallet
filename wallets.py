@@ -25,6 +25,7 @@ class Wallet:
         self.utxos = []
         self.filename = filename
         self.dirty = False
+        self.pwCheck = None
         self.address_derivation = address_derivation
         self.change_derivation  = change_derivation
         self.address_type       = address_type
@@ -32,6 +33,7 @@ class Wallet:
         d = deepcopy(self)
         # returns the class name of the correct subclass
         del d.__dict__["filename"]
+        del d.__dict__["pwCheck"]
         del d.__dict__["dirty"]
         d.wallet_type = type(self).__name__
         return util.to_dict(d.__dict__)
