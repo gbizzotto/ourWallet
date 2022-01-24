@@ -339,7 +339,7 @@ class CreateWordWalletDialog(QDialog):
         words = " ".join(str(self.ui.wordsPlainTextEdit.toPlainText()).split())
         password = str(self.ui.pwLineEdit.text())
         testnet_str = "1" if testnet else "0"
-        self.wallet = wallets.WordsWallet(self.ui.nameLineEdit.text(), words, password, testnet, "m/84'/"+testnet_str+"'/0'/0/x", "m/84'/"+testnet_str+"'/0'/0/x", wallets.SEGWIT)
+        self.wallet = wallets.WordsWallet(self.ui.nameLineEdit.text(), words, password, testnet, "m/84'/"+testnet_str+"'/0'/0/x", "m/84'/"+testnet_str+"'/0'/1/x", wallets.SEGWIT)
         super(CreateWordWalletDialog, self).accept()
 
 class AddWalletFromWordsDialog(QDialog):
@@ -366,7 +366,7 @@ class AddWalletFromWordsDialog(QDialog):
         words = " ".join(str(self.ui.wordsPlainTextEdit.toPlainText()).split())
         password = str(self.ui.pwLineEdit.text())
         testnet_str = "1" if testnet else "0"
-        self.wallet = wallets.WordsWallet(self.ui.nameLineEdit.text(), words, password, testnet, "m/84'/"+testnet_str+"'/0'/0/x", "m/84'/"+testnet_str+"'/0'/0/x", wallets.SEGWIT)
+        self.wallet = wallets.WordsWallet(self.ui.nameLineEdit.text(), words, password, testnet, "m/84'/"+testnet_str+"'/0'/0/x", "m/84'/"+testnet_str+"'/0'/1/x", wallets.SEGWIT)
         super(AddWalletFromWordsDialog, self).accept()
 
 class AddWalletFromXprvDialog(QDialog):
