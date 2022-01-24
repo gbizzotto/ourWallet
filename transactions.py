@@ -460,9 +460,11 @@ class Transaction:
         if vin >= len(self.inputs):
             return None
         input = self.inputs[vin]
-        if not input.scriptsig or len(input.scriptsig) == 0:
-            return None
         script_type = scriptVM.identify_scriptpubkey(input.txoutput.scriptpubkey)
+
+        if script_type == scriptVM.P2PK or script_type == scriptVM.P2PKH:
+            if not input.scriptsig or len(input.scriptsig) == 0:
+                return None
 
         if script_type == scriptVM.P2PK:
             full_script = input.scriptsig + input.txoutput.scriptpubkey
