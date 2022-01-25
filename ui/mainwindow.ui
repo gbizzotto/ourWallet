@@ -387,55 +387,6 @@
         </item>
        </layout>
       </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QWidget" name="widget" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="signAllPUshButton">
-          <property name="text">
-           <string>Sign all mine</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="verifyPushButton">
-          <property name="text">
-           <string>Verify</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="exportPushButton">
-          <property name="text">
-           <string>Export</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="broadcastPushButton">
-          <property name="text">
-           <string>Broadcast</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="clearButton">
-          <property name="text">
-           <string>Clear</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
      </layout>
     </item>
    </layout>
@@ -446,7 +397,7 @@
      <x>0</x>
      <y>0</y>
      <width>1050</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTX">
@@ -454,6 +405,13 @@
      <string>TX</string>
     </property>
     <addaction name="actionImport"/>
+    <addaction name="separator"/>
+    <addaction name="signAllPUshButton"/>
+    <addaction name="verifyPushButton"/>
+    <addaction name="broadcastPushButton"/>
+    <addaction name="clearButton"/>
+    <addaction name="separator"/>
+    <addaction name="exportPushButton"/>
    </widget>
    <widget class="QMenu" name="menuWallets">
     <property name="title">
@@ -514,6 +472,34 @@
   <action name="actionOpen">
    <property name="text">
     <string>Open...</string>
+   </property>
+  </action>
+  <action name="signAllPUshButton">
+   <property name="text">
+    <string>Sign all mine</string>
+   </property>
+  </action>
+  <action name="verifyPushButton">
+   <property name="text">
+    <string>Verify</string>
+   </property>
+  </action>
+  <action name="broadcastPushButton">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Broadcast</string>
+   </property>
+  </action>
+  <action name="exportPushButton">
+   <property name="text">
+    <string>Export...</string>
+   </property>
+  </action>
+  <action name="clearButton">
+   <property name="text">
+    <string>Clear</string>
    </property>
   </action>
  </widget>

@@ -32,6 +32,17 @@ class Ui_MainWindow(object):
         self.actionWallets.setObjectName(u"actionWallets")
         self.actionOpen = QAction(MainWindow)
         self.actionOpen.setObjectName(u"actionOpen")
+        self.signAllPUshButton = QAction(MainWindow)
+        self.signAllPUshButton.setObjectName(u"signAllPUshButton")
+        self.verifyPushButton = QAction(MainWindow)
+        self.verifyPushButton.setObjectName(u"verifyPushButton")
+        self.broadcastPushButton = QAction(MainWindow)
+        self.broadcastPushButton.setObjectName(u"broadcastPushButton")
+        self.broadcastPushButton.setEnabled(False)
+        self.exportPushButton = QAction(MainWindow)
+        self.exportPushButton.setObjectName(u"exportPushButton")
+        self.clearButton = QAction(MainWindow)
+        self.clearButton.setObjectName(u"clearButton")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout = QHBoxLayout(self.centralwidget)
@@ -302,50 +313,13 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addLayout(self.gridLayout)
 
-        self.horizontalLayout_3 = QHBoxLayout()
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.widget = QWidget(self.centralwidget)
-        self.widget.setObjectName(u"widget")
-        sizePolicy2.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
-        self.widget.setSizePolicy(sizePolicy2)
-
-        self.horizontalLayout_3.addWidget(self.widget)
-
-        self.signAllPUshButton = QPushButton(self.centralwidget)
-        self.signAllPUshButton.setObjectName(u"signAllPUshButton")
-
-        self.horizontalLayout_3.addWidget(self.signAllPUshButton)
-
-        self.verifyPushButton = QPushButton(self.centralwidget)
-        self.verifyPushButton.setObjectName(u"verifyPushButton")
-
-        self.horizontalLayout_3.addWidget(self.verifyPushButton)
-
-        self.exportPushButton = QPushButton(self.centralwidget)
-        self.exportPushButton.setObjectName(u"exportPushButton")
-
-        self.horizontalLayout_3.addWidget(self.exportPushButton)
-
-        self.broadcastPushButton = QPushButton(self.centralwidget)
-        self.broadcastPushButton.setObjectName(u"broadcastPushButton")
-
-        self.horizontalLayout_3.addWidget(self.broadcastPushButton)
-
-        self.clearButton = QPushButton(self.centralwidget)
-        self.clearButton.setObjectName(u"clearButton")
-
-        self.horizontalLayout_3.addWidget(self.clearButton)
-
-
-        self.verticalLayout_3.addLayout(self.horizontalLayout_3)
-
 
         self.horizontalLayout.addLayout(self.verticalLayout_3)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1050, 21))
+        self.menubar.setGeometry(QRect(0, 0, 1050, 20))
         self.menuTX = QMenu(self.menubar)
         self.menuTX.setObjectName(u"menuTX")
         self.menuWallets = QMenu(self.menubar)
@@ -361,6 +335,13 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuTX.menuAction())
         self.menubar.addAction(self.menuWallets.menuAction())
         self.menuTX.addAction(self.actionImport)
+        self.menuTX.addSeparator()
+        self.menuTX.addAction(self.signAllPUshButton)
+        self.menuTX.addAction(self.verifyPushButton)
+        self.menuTX.addAction(self.broadcastPushButton)
+        self.menuTX.addAction(self.clearButton)
+        self.menuTX.addSeparator()
+        self.menuTX.addAction(self.exportPushButton)
         self.menuWallets.addSeparator()
         self.menuWallets.addAction(self.actionOpen)
         self.menuWallets.addAction(self.actionLoad_from_words)
@@ -382,6 +363,11 @@ class Ui_MainWindow(object):
         self.actionNew_empty.setText(QCoreApplication.translate("MainWindow", u"New empty...", None))
         self.actionWallets.setText(QCoreApplication.translate("MainWindow", u"Wallets", None))
         self.actionOpen.setText(QCoreApplication.translate("MainWindow", u"Open...", None))
+        self.signAllPUshButton.setText(QCoreApplication.translate("MainWindow", u"Sign all mine", None))
+        self.verifyPushButton.setText(QCoreApplication.translate("MainWindow", u"Verify", None))
+        self.broadcastPushButton.setText(QCoreApplication.translate("MainWindow", u"Broadcast", None))
+        self.exportPushButton.setText(QCoreApplication.translate("MainWindow", u"Export...", None))
+        self.clearButton.setText(QCoreApplication.translate("MainWindow", u"Clear", None))
         self.UTXOsGroupBox.setTitle(QCoreApplication.translate("MainWindow", u"UTXOs", None))
         self.addInputsPushButton.setText(QCoreApplication.translate("MainWindow", u"Add", None))
         self.signOneButton.setText(QCoreApplication.translate("MainWindow", u"Sign selected", None))
@@ -406,11 +392,6 @@ class Ui_MainWindow(object):
         self.locktimeLineEdit.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.dateTimeEdit.setDisplayFormat(QCoreApplication.translate("MainWindow", u"yyyy-MM-dd HH:mm", None))
         self.PreventFeeSnipingCheckBox.setText(QCoreApplication.translate("MainWindow", u"Prevent fee sniping", None))
-        self.signAllPUshButton.setText(QCoreApplication.translate("MainWindow", u"Sign all mine", None))
-        self.verifyPushButton.setText(QCoreApplication.translate("MainWindow", u"Verify", None))
-        self.exportPushButton.setText(QCoreApplication.translate("MainWindow", u"Export", None))
-        self.broadcastPushButton.setText(QCoreApplication.translate("MainWindow", u"Broadcast", None))
-        self.clearButton.setText(QCoreApplication.translate("MainWindow", u"Clear", None))
         self.menuTX.setTitle(QCoreApplication.translate("MainWindow", u"TX", None))
         self.menuWallets.setTitle(QCoreApplication.translate("MainWindow", u"Wallets", None))
         self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))
