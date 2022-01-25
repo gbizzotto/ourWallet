@@ -148,6 +148,7 @@ class Ui_ChooseUTXOsDialog(object):
         self.retranslateUi(ChooseUTXOsDialog)
         self.buttonBox.accepted.connect(ChooseUTXOsDialog.accept)
         self.buttonBox.rejected.connect(ChooseUTXOsDialog.reject)
+        self.UTXOsTableWidget.cellDoubleClicked.connect(ChooseUTXOsDialog.accept)
 
         self.tabWidget.setCurrentIndex(0)
 
