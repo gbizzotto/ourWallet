@@ -18,8 +18,8 @@ class Ui_MainWindow(object):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1050, 885)
-        self.actionImport = QAction(MainWindow)
-        self.actionImport.setObjectName(u"actionImport")
+        self.importPushButton = QAction(MainWindow)
+        self.importPushButton.setObjectName(u"importPushButton")
         self.actionLoad_from_words = QAction(MainWindow)
         self.actionLoad_from_words.setObjectName(u"actionLoad_from_words")
         self.actionLoad_from_xprv = QAction(MainWindow)
@@ -334,7 +334,7 @@ class Ui_MainWindow(object):
 
         self.menubar.addAction(self.menuTX.menuAction())
         self.menubar.addAction(self.menuWallets.menuAction())
-        self.menuTX.addAction(self.actionImport)
+        self.menuTX.addAction(self.importPushButton)
         self.menuTX.addSeparator()
         self.menuTX.addAction(self.signAllPUshButton)
         self.menuTX.addAction(self.verifyPushButton)
@@ -356,7 +356,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"ourWallet", None))
-        self.actionImport.setText(QCoreApplication.translate("MainWindow", u"Import...", None))
+        self.importPushButton.setText(QCoreApplication.translate("MainWindow", u"Import...", None))
         self.actionLoad_from_words.setText(QCoreApplication.translate("MainWindow", u"Regenerate from words...", None))
         self.actionLoad_from_xprv.setText(QCoreApplication.translate("MainWindow", u"Regenerate from xprv...", None))
         self.actionNew_HD.setText(QCoreApplication.translate("MainWindow", u"New HD...", None))

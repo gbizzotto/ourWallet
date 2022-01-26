@@ -274,7 +274,8 @@ class WalletInfoDialog(QDialog):
         changed = False
         for derivation_pattern in (self.wallet.address_derivation, self.wallet.change_derivation):
             if 'x' in derivation_pattern:
-                max = 10
+                ahead = 30
+                max = ahead
                 i = 0
                 while i < max:
                     derivation = derivation_pattern.replace("x", str(i))
@@ -288,7 +289,7 @@ class WalletInfoDialog(QDialog):
                                 changed = self.wallet.remove_utxo(utxo) or changed
                             else:
                                 changed = self.wallet.add_utxo(utxo) or changed
-                            max = i+10
+                            max = i+ahead
                     i += 1
             else:
                 address = self.wallet.address(derivation_pattern)
@@ -786,6 +787,7 @@ class MainWindow(QMainWindow):
         self.ui.         signOneButton.clicked.connect(lambda: self.sign_selected(transactions.SIGHASH_ALL))
         self.ui.      verifyPushButton.triggered.connect(self.verify       )
         self.ui.      exportPushButton.triggered.connect(self.export       )
+        self.ui.      importPushButton.triggered.connect(self.import_      )
         self.ui.   broadcastPushButton.triggered.connect(self.broadcast    )
         self.ui.           clearButton.triggered.connect(self.clear        )
         self.ui.PreventFeeSnipingCheckBox.toggled.connect(self.prevent_fee_sniping_toggled)
@@ -944,7 +946,60 @@ class MainWindow(QMainWindow):
             event.ignore()
 
     def export(self):
-        print("serialized transaction", self.transaction.to_bin().hex())
+        filename = QFileDialog.getSaveFileName(self, 'Export transaction', filter="Tx files(*.tx);;All files(*)")[0]
+        if len(filename) == 0:
+            filename = None
+            return
+        if '.' not in filename:
+            filename += ".tx"
+
+        tx_hex = self.transaction.to_bin().hex()
+
+        file = open(filename, 'w')
+        file.write(tx_hex)
+        for input in self.transaction.inputs:
+            file.write(",")
+            if input.txoutput and input.txoutput.metadata and input.txoutput.metadata.wallet_name:
+                file.write(input.txoutput.metadata.wallet_name)
+            file.write(",")
+            if input.txoutput and input.txoutput.metadata and input.txoutput.metadata.derivation:
+                file.write(input.txoutput.metadata.derivation)
+
+        print("serialized transaction", tx_hex)
+
+    def import_(self):
+        filename = QFileDialog.getOpenFileName(self, 'Import transaction', filter="Tx files(*.tx);;All files(*)")[0]
+        if len(filename) == 0:
+            return
+
+        file = open(filename, 'r')
+        tx_with_metadata = file.read().split(",")
+        tx_hex = tx_with_metadata[0]
+        del tx_with_metadata[0]
+        tx_bin = binascii.unhexlify(tx_hex)
+
+        tx = transactions.Transaction.from_bin(tx_bin)
+        for input in tx.inputs:
+            input.parent_tx = tx
+            input.txoutput  = explorer.get_utxo(input.txid.hex(), input.vout, testnet)
+            input.txoutput.scriptpubkey = explorer.get_output_scriptpubkey(input.txid, input.vout, testnet)
+            input.txoutput.metadata = transactions.TxOutput.Metadata()
+            input.txoutput.metadata.txid = input.txid
+            input.txoutput.metadata.vout = input.vout
+            input.txoutput.metadata.address = scriptVM.get_address(input.txoutput.scriptpubkey, testnet)
+            input.txoutput.metadata.wallet_name = tx_with_metadata[0]
+            input.txoutput.metadata.derivation  = tx_with_metadata[1]
+            if len(input.txoutput.metadata.wallet_name) == 0:
+                input.txoutput.metadata.wallet_name = None
+            if len(input.txoutput.metadata.derivation) == 0:
+                input.txoutput.metadata.derivation = None
+            del tx_with_metadata[0]
+            del tx_with_metadata[0]
+        for output in tx.outputs:
+            output.metadata = transactions.TxOutput.Metadata()
+            output.metadata.address = scriptVM.get_address(output.scriptpubkey, testnet)
+
+        self.set_transaction(tx)
 
     def verify_one(self, vin):
         verification = self.transaction.verify(vin)
@@ -977,6 +1032,9 @@ class MainWindow(QMainWindow):
 
         selected_indexes = set([x.row() for x in self.ui.inputsView.selectedIndexes()])
         for vin in selected_indexes:
+            if self.transaction.inputs[vin].txoutput and self.transaction.inputs[vin].txoutput.metadata and self.transaction.inputs[vin].txoutput.metadata.wallet_name and self.transaction.inputs[vin].txoutput.metadata.wallet_name not in self.wallets:
+                QMessageBox.warning(self, 'Wallet not found', 'Wallet "' + self.transaction.inputs[vin].txoutput.metadata.wallet_name + '" not loaded.')
+                continue
             if False == self.transaction.sign_one(sighash_type, vin, wallets=self.wallets):
                 dialog = PKeyDialog(self.transaction, vin)
                 if dialog.exec():
@@ -993,6 +1051,13 @@ class MainWindow(QMainWindow):
             if not self.transaction.has_any_signature():
                 self.transaction.locktime = explorer.get_current_height(testnet)
                 self.ui.locktimeLineEdit.setText(str(self.transaction.locktime))
+
+        selected_indexes = set([x.row() for x in self.ui.inputsView.selectedIndexes()])
+        for vin in selected_indexes:
+            if not self.transaction.inputs[vin].txoutput or not self.transaction.inputs[vin].txoutput.metadata or not self.transaction.inputs[vin].txoutput.metadata.wallet_name:
+                continue
+            if self.transaction.inputs[vin].txoutput.metadata.wallet_name not in self.wallets:
+                QMessageBox.warning(self, 'Wallet not found', 'Wallet "' + self.transaction.inputs[vin].txoutput.metadata.wallet_name + '" not loaded.')
 
         self.transaction.sign_all(self.wallets, transactions.SIGHASH_ALL)
         #self.verify_all()
@@ -1142,8 +1207,11 @@ class MainWindow(QMainWindow):
             print("Broadcast OK", txid_hex)
 
     def clear(self):
-        self.transaction = transactions.Transaction()
-        self.ui. inputsView.setModel(InputsTableModel(self.transaction. inputs))
+        self.set_transaction(transactions.Transaction())
+
+    def set_transaction(self, tx):
+        self.transaction = tx
+        self.ui. inputsView.setModel(InputsTableModel(self.transaction.inputs))
         self.ui. inputsView.selectionModel().selectionChanged.connect(self.selected_inputs_changed)
         self.ui. inputsView.model().dataChanged.connect(self.inputs_changed)
         self.ui.outputsView.setModel(OutputsTableModel(self.transaction.outputs))

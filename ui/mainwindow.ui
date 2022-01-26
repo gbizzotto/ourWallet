@@ -404,7 +404,7 @@
     <property name="title">
      <string>TX</string>
     </property>
-    <addaction name="actionImport"/>
+    <addaction name="importPushButton"/>
     <addaction name="separator"/>
     <addaction name="signAllPUshButton"/>
     <addaction name="verifyPushButton"/>
@@ -439,7 +439,7 @@
     <bool>false</bool>
    </attribute>
   </widget>
-  <action name="actionImport">
+  <action name="importPushButton">
    <property name="text">
     <string>Import...</string>
    </property>
