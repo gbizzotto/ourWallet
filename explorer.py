@@ -183,15 +183,16 @@ def get_utxos(wallet_name, address, derivation, testnet):
     # blockcypher
 
 def get_output_scriptpubkey(txid, vout, testnet):
-    print("explorer get_output_scriptpubkey", txid.hex() + ":" + vout)
+    print("explorer get_output_scriptpubkey", txid.hex() + ":" + str(vout))
 
     # blockstream
     network = "testnet/" if testnet else ""
-    page = requests.get("https://blockstream.info/"+network+"tx/"+txid)
+    page = requests.get("https://blockstream.info/"+network+"api/tx/"+txid.hex())
     if page.status_code != 200:
         print("page.status_code", page.status_code)
         return None
-    return binascii.unhexlify(json.loads(page.text)["vout"][vout]["scriptpubkey"])
+    jsn = json.loads(page.text)
+    return binascii.unhexlify(jsn["vout"][vout]["scriptpubkey"])
 
 def get_current_height(testnet):
     epoch = time.time()
