@@ -2,7 +2,13 @@ import io
 import hashlib
 import ecdsa
 import binascii
+import bip32utils
+import bech32
+
+from bip32utils.BIP32Key import PREFIX_TESTNET_SH, PREFIX_MAINNET_SH, PREFIX_MAINNET_PKH, PREFIX_TESTNET_PKH
+
 from copy import deepcopy
+from hashlib import sha256
 
 import transactions
 
@@ -39,6 +45,38 @@ def identify_scriptpubkey(script):
             return P2WSH
     elif len(parsed_script) == 2 and parsed_script[0] == RunnerVM.OP_1 and len(parsed_script[1]) == 32:
         return P2TR
+    return None
+
+def get_address(script, testnet):
+    parsed_script = ScriptByteStream(script).read_all()
+    if len(parsed_script) == 2 and parsed_script[1] == RunnerVM.OP_CHECKSIG:
+        return parsed_script[0].hex()
+    elif len(parsed_script) == 5 \
+            and parsed_script[0] == RunnerVM.OP_DUP \
+            and parsed_script[1] == RunnerVM.OP_HASH160 \
+            and parsed_script[3] == RunnerVM.OP_EQUALVERIFY \
+            and parsed_script[4] == RunnerVM.OP_CHECKSIG:
+        addressversion = PREFIX_MAINNET_PKH if not testnet else PREFIX_TESTNET_PKH
+        vh160 = addressversion + parsed_script[2]
+        return bip32utils.Base58.check_encode(vh160)
+    elif len(parsed_script) == 3 and parsed_script[0] == RunnerVM.OP_HASH160 and parsed_script[2] == RunnerVM.OP_EQUAL:
+        addressversion = PREFIX_MAINNET_SH if not testnet else PREFIX_TESTNET_SH
+        addressBytes = hashlib.new('ripemd160', sha256(scriptSig).digest()).digest()
+        vh160 = addressversion + parsed_script[1]
+        return bip32utils.Base58.check_encode(vh160)
+    elif len(parsed_script) >= 4 and parsed_script[-1] == RunnerVM.OP_CHECKMULTISIG \
+            and RunnerVM.OP_1 <= parsed_script[-2] <= RunnerVM.OP_16 \
+            and RunnerVM.OP_1 <= parsed_script[ 0] <= RunnerVM.OP_16:
+        n = parsed_script[-2]
+        if len(parsed_script) == n+4:
+            return "Multisig"
+    elif len(parsed_script) == 2 and parsed_script[0] == RunnerVM.OP_0:
+        if len(parsed_script[1]) == 20:
+            return bech32.encode('bc' if not testnet else 'tb', 0, parsed_script[1])
+        elif  len(parsed_script[1]) == 32:
+            return bech32.encode('bc' if not testnet else 'tb', 0, parsed_script[1])
+    elif len(parsed_script) == 2 and parsed_script[0] == RunnerVM.OP_1 and len(parsed_script[1]) == 32:
+        return bech32.encode('bc' if not testnet else 'tb', 0, parsed_script[1])
     return None
 
 def address_is_testnet(address):
