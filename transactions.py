@@ -324,6 +324,7 @@ class Transaction:
             txin = TxInput.from_txbytestream(stream)
             txin.parent_tx = t
             t.inputs.append(txin)
+            t.witnesses.append([])
 
         t.outputs = []
         for i in range(stream.read_varint()):
