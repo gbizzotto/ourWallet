@@ -129,68 +129,55 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
 
-        self.horizontalLayout_9 = QHBoxLayout()
-        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
-        self.widget_4 = QWidget(self.centralwidget)
-        self.widget_4.setObjectName(u"widget_4")
+        self.gridLayout_2 = QGridLayout()
+        self.gridLayout_2.setObjectName(u"gridLayout_2")
+        self.widget_7 = QWidget(self.centralwidget)
+        self.widget_7.setObjectName(u"widget_7")
         sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.widget_4.sizePolicy().hasHeightForWidth())
-        self.widget_4.setSizePolicy(sizePolicy1)
+        sizePolicy1.setHeightForWidth(self.widget_7.sizePolicy().hasHeightForWidth())
+        self.widget_7.setSizePolicy(sizePolicy1)
 
-        self.horizontalLayout_9.addWidget(self.widget_4)
+        self.gridLayout_2.addWidget(self.widget_7, 1, 3, 1, 1)
 
         self.label_5 = QLabel(self.centralwidget)
         self.label_5.setObjectName(u"label_5")
 
-        self.horizontalLayout_9.addWidget(self.label_5)
+        self.gridLayout_2.addWidget(self.label_5, 1, 1, 1, 1)
+
+        self.widget = QWidget(self.centralwidget)
+        self.widget.setObjectName(u"widget")
+        sizePolicy1.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy1)
+
+        self.gridLayout_2.addWidget(self.widget, 1, 0, 1, 1)
 
         self.transactionSizeEdit = QLineEdit(self.centralwidget)
         self.transactionSizeEdit.setObjectName(u"transactionSizeEdit")
         self.transactionSizeEdit.setReadOnly(True)
 
-        self.horizontalLayout_9.addWidget(self.transactionSizeEdit)
-
-        self.widget_3 = QWidget(self.centralwidget)
-        self.widget_3.setObjectName(u"widget_3")
-        sizePolicy1.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
-        self.widget_3.setSizePolicy(sizePolicy1)
-
-        self.horizontalLayout_9.addWidget(self.widget_3)
-
-
-        self.verticalLayout_3.addLayout(self.horizontalLayout_9)
-
-        self.horizontalLayout_10 = QHBoxLayout()
-        self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
-        self.widget_5 = QWidget(self.centralwidget)
-        self.widget_5.setObjectName(u"widget_5")
-        sizePolicy1.setHeightForWidth(self.widget_5.sizePolicy().hasHeightForWidth())
-        self.widget_5.setSizePolicy(sizePolicy1)
-
-        self.horizontalLayout_10.addWidget(self.widget_5)
+        self.gridLayout_2.addWidget(self.transactionSizeEdit, 1, 2, 1, 1)
 
         self.label_6 = QLabel(self.centralwidget)
         self.label_6.setObjectName(u"label_6")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.label_6.sizePolicy().hasHeightForWidth())
+        self.label_6.setSizePolicy(sizePolicy2)
+        self.label_6.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
 
-        self.horizontalLayout_10.addWidget(self.label_6)
+        self.gridLayout_2.addWidget(self.label_6, 2, 1, 1, 1)
 
         self.transactionVSizeEdit = QLineEdit(self.centralwidget)
         self.transactionVSizeEdit.setObjectName(u"transactionVSizeEdit")
         self.transactionVSizeEdit.setReadOnly(True)
 
-        self.horizontalLayout_10.addWidget(self.transactionVSizeEdit)
-
-        self.widget_6 = QWidget(self.centralwidget)
-        self.widget_6.setObjectName(u"widget_6")
-        sizePolicy1.setHeightForWidth(self.widget_6.sizePolicy().hasHeightForWidth())
-        self.widget_6.setSizePolicy(sizePolicy1)
-
-        self.horizontalLayout_10.addWidget(self.widget_6)
+        self.gridLayout_2.addWidget(self.transactionVSizeEdit, 2, 2, 1, 1)
 
 
-        self.verticalLayout_3.addLayout(self.horizontalLayout_10)
+        self.verticalLayout_3.addLayout(self.gridLayout_2)
 
         self.horizontalLayout_5 = QHBoxLayout()
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
@@ -270,33 +257,33 @@ class Ui_MainWindow(object):
 
         self.widget_2 = QWidget(self.centralwidget)
         self.widget_2.setObjectName(u"widget_2")
-        sizePolicy2 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
-        self.widget_2.setSizePolicy(sizePolicy2)
+        sizePolicy3 = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
+        self.widget_2.setSizePolicy(sizePolicy3)
 
         self.gridLayout.addWidget(self.widget_2, 0, 4, 1, 1)
 
         self.locktimeLineEdit = QLineEdit(self.centralwidget)
         self.locktimeLineEdit.setObjectName(u"locktimeLineEdit")
         self.locktimeLineEdit.setEnabled(True)
-        sizePolicy3 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy3.setHorizontalStretch(0)
-        sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.locktimeLineEdit.sizePolicy().hasHeightForWidth())
-        self.locktimeLineEdit.setSizePolicy(sizePolicy3)
+        sizePolicy4 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.locktimeLineEdit.sizePolicy().hasHeightForWidth())
+        self.locktimeLineEdit.setSizePolicy(sizePolicy4)
 
         self.gridLayout.addWidget(self.locktimeLineEdit, 0, 1, 1, 1)
 
         self.dateTimeEdit = QDateTimeEdit(self.centralwidget)
         self.dateTimeEdit.setObjectName(u"dateTimeEdit")
         self.dateTimeEdit.setEnabled(True)
-        sizePolicy4 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
-        self.dateTimeEdit.setSizePolicy(sizePolicy4)
+        sizePolicy5 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
+        self.dateTimeEdit.setSizePolicy(sizePolicy5)
         self.dateTimeEdit.setMinimumSize(QSize(200, 0))
         self.dateTimeEdit.setDateTime(QDateTime(QDate(2033, 5, 18), QTime(3, 40, 0)))
         self.dateTimeEdit.setCalendarPopup(True)
