@@ -831,6 +831,15 @@ class MainWindow(QMainWindow):
         a.triggered.connect(lambda: self.sign_selected(transactions.SIGHASH_SINGLE | transactions.SIGHASH_ANYONECANPAY))
         self.ui.signOneButton.setMenu(m)
 
+        if testnet:
+            pixmap = QPixmap("bitcoin_testnet.png")
+            txt = "Testnet"
+        else:
+            pixmap = QPixmap("bitcoin_mainnet.png")
+            txt = "Mainnet"
+        self.ui.labelLogo.setPixmap(pixmap.scaled(45, 45, Qt.KeepAspectRatio))
+        self.ui.labelNetwork.setText(txt)
+
     #def store_current_selection(self, newSelection, oldSelection):
     #    print("changed")
     #    #self.model().selection_changed(newSelection)
