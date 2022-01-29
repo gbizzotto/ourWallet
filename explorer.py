@@ -159,9 +159,10 @@ def get_utxos(wallet_name, address, derivation, testnet):
 
     # blockstream
     network = "testnet/" if testnet else ""
-    page = requests.get("https://blockstream.info/"+network+"api/address/"+address+"/utxo")
+    url = "https://blockstream.info/"+network+"api/address/"+address+"/utxo"
+    page = requests.get(url)
     if page.status_code != 200:
-        print("page.status_code", page.status_code)
+        print("page.status_code", page.status_code, "for URL", url)
         return []
     utxos = json.loads(page.text)
     result = []
