@@ -64,6 +64,8 @@ class HDWallet(Wallet):
         purpose_str = str(root_key.bip)
         super(HDWallet, self).__init__(name, address_derivation, change_derivation, address_type)
         self.root_key = root_key
+    def is_testnet(self):
+        return self.root_key.testnet
     def to_dict(self):
         d = super(HDWallet, self).to_dict()
         del d["root_key"]

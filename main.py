@@ -59,7 +59,7 @@ import scriptVM
 import bip32utils
 from bip32utils import Base58
 
-testnet = True
+testnet = False
 
 def set_qr_label(label, text):
     if text is None or len(text) == 0:
@@ -1171,6 +1171,12 @@ class MainWindow(QMainWindow):
             return
         d = json.loads(j)
         w = wallets.from_dict(d)
+        if w.is_testnet() != testnet:
+            if testnet:
+                QMessageBox.warning(self, "Open wallet", "Wallet is NOT testnet while system was run with -testnet command line option")
+            else:
+                QMessageBox.warning(self, "Open wallet", "Wallet is testnet while system was NOT run with -testnet command line option")
+            return
         w.filename = filename
         w.pwCheck = ourCrypto.encrypt("ourPassword", pw)
         self.wallets[w.name] = w
@@ -1224,6 +1230,7 @@ class MainWindow(QMainWindow):
         self.update_size()
 
 if __name__ == "__main__":
+    testnet = len(sys.argv) > 1 and sys.argv[1] == "-testnet"
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
