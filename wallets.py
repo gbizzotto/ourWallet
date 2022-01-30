@@ -41,7 +41,7 @@ class Wallet:
     def add_utxo(self, utxo):
         for u in self.utxos:
             if u.eq(utxo):
-                return False
+                return u.update_spent(utxo) or u.update_parent_height(utxo)
         self.utxos.append(utxo)
         return True
 

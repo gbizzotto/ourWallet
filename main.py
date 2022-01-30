@@ -160,7 +160,7 @@ class WalletInfoDialog(QDialog):
         self.ui.addressTableWidget.resizeColumnsToContents()
         self.ui.addressTableWidget.itemSelectionChanged.connect(self.address_selection_changed)
 
-        utxo_columns_titles = ["confirmations", "amount", "derivation", "address"]
+        utxo_columns_titles = ["Spent", "confirmations", "amount", "derivation", "address"]
         self.ui.utxoTable.setColumnCount(len(utxo_columns_titles))
         self.ui.utxoTable.setHorizontalHeaderLabels(utxo_columns_titles)
         self.ui.utxoRefreshButton.clicked.connect(self.refresh_utxos)
@@ -172,6 +172,7 @@ class WalletInfoDialog(QDialog):
         self.ui.addressDerivationEdit.textChanged.connect(self.addressDerivationEditChanged)
         self.ui. changeDerivationEdit.textChanged.connect(self. changeDerivationEditChanged)
 
+        self.current_height = explorer.get_current_height(testnet)
         self.display_utxos(wallet.utxos)
 
     def resizeEvent(self, event):
@@ -237,24 +238,29 @@ class WalletInfoDialog(QDialog):
         self.ui.addressTableWidget.setRowCount(0)
 
     def display_utxos(self, utxos):
-        current_height = explorer.get_current_height(testnet)
         utxoTable = self.ui.utxoTable
         utxoTable.setRowCount(0)
-        balance = 0
+        total_in = 0
+        total_out = 0
         for utxo in utxos:
-            balance += utxo.amount
+            if utxo.metadata.spent:
+                total_out += utxo.amount
+            total_in += utxo.amount
             row_idx = utxoTable.rowCount()
             utxoTable.insertRow(row_idx)
-            if utxo.parent_tx is None:
+            if utxo.parent_tx is None or utxo.parent_tx.metadata is None: # or utxo.parent_tx.metadata.height is None:
                 utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
+            utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(utxo.metadata.spent)))
             if utxo.parent_tx.metadata and utxo.parent_tx.metadata.height:
-                utxoTable.setItem(row_idx, 0, QTableWidgetItem(str(1 + current_height - utxo.parent_tx.metadata.height)))
+                utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(1 + self.current_height - utxo.parent_tx.metadata.height)))
             else:
-                utxoTable.setItem(row_idx, 0, QTableWidgetItem("Unconfirmed"))
-            utxoTable.setItem(row_idx, 1, QTableWidgetItem(str(utxo.amount)))
-            utxoTable.setItem(row_idx, 2, QTableWidgetItem(utxo.metadata.derivation))
-            utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.address))
-        self.ui.balanceEdit.setText(str(balance))
+                utxoTable.setItem(row_idx, 1, QTableWidgetItem("Unconfirmed"))
+            utxoTable.setItem(row_idx, 2, QTableWidgetItem(str(utxo.amount)))
+            utxoTable.setItem(row_idx, 3, QTableWidgetItem(utxo.metadata.derivation))
+            utxoTable.setItem(row_idx, 4, QTableWidgetItem(utxo.metadata.address))
+        self.ui.balanceEdit.setText(str(total_in-total_out))
+        self.ui.totalInEdit.setText(str(total_in))
+        self.ui.totalOutEdit.setText(str(total_out))
 
     def updateQrCode(self):
         derivation = self.ui.derivationEdit.text()
@@ -274,27 +280,30 @@ class WalletInfoDialog(QDialog):
         changed = False
         for derivation_pattern in (self.wallet.address_derivation, self.wallet.change_derivation):
             if 'x' in derivation_pattern:
-                ahead = 30
+                ahead = 20
                 max = ahead
                 i = 0
                 while i < max:
                     derivation = derivation_pattern.replace("x", str(i))
                     address = self.wallet.address(derivation)
-                    utxos = explorer.get_utxos(self.wallet.name, address, derivation, testnet)
+                    utxos = explorer.get_txos(self.wallet.name, address, derivation, testnet)
                     if len(utxos) == 0:
                         changed = self.wallet.remove_utxos_by_address(address) or changed
                     else:
                         for utxo in utxos:
-                            if utxo.metadata.spent:
-                                changed = self.wallet.remove_utxo(utxo) or changed
-                            else:
-                                changed = self.wallet.add_utxo(utxo) or changed
+                            changed = self.wallet.add_utxo(utxo) or changed
                             max = i+ahead
                     i += 1
             else:
                 address = self.wallet.address(derivation_pattern)
                 for utxo in explorer.get_utxos(self.wallet.name, address, derivation_pattern, testnet):
                     changed = changed or self.wallet.add_utxo(utxo)
+
+        current_height = explorer.get_current_height(testnet)
+        if self.current_height != current_height:
+            self.current_height = current_height
+            changed = True
+
         if changed:
             self.wallet.dirty = True
             self.display_utxos(self.wallet.utxos)
@@ -514,6 +523,8 @@ class ChooseUTXOsDialog(QDialog):
         for utxo in wallet.utxos:
             if utxo.parent_tx is None:
                 utxo.parent_tx = explorer.get_transaction(utxo.metadata.txid, testnet)
+            if utxo.metadata is None or utxo.metadata.spent == True:
+                continue
             self.known_utxos.append(utxo)
             row_idx = utxoTable.rowCount()
             utxoTable.insertRow(row_idx)

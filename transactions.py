@@ -148,6 +148,17 @@ class TxOutput:
     def eq(self, other):
         return self.metadata.txid == other.metadata.txid and self.metadata.vout == other.metadata.vout
 
+    def update_spent(self, other):
+        if self.metadata.spent == other.metadata.spent:
+            return False
+        self.metadata.spent = other.metadata.spent
+        return True
+    def update_parent_height(self, other):
+        if self.parent_tx.metadata.height == other.parent_tx.metadata.height:
+            return False
+        self.parent_tx.metadata.height = other.parent_tx.metadata.height
+        return True
+
     def to_dict(self):
         d = deepcopy(self.__dict__)
         if "parent_tx" in d:

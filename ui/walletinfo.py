@@ -43,6 +43,26 @@ class Ui_walletInfoDialog(object):
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.label_10 = QLabel(self.tab_utxos)
+        self.label_10.setObjectName(u"label_10")
+
+        self.horizontalLayout.addWidget(self.label_10)
+
+        self.totalInEdit = QLineEdit(self.tab_utxos)
+        self.totalInEdit.setObjectName(u"totalInEdit")
+
+        self.horizontalLayout.addWidget(self.totalInEdit)
+
+        self.label_11 = QLabel(self.tab_utxos)
+        self.label_11.setObjectName(u"label_11")
+
+        self.horizontalLayout.addWidget(self.label_11)
+
+        self.totalOutEdit = QLineEdit(self.tab_utxos)
+        self.totalOutEdit.setObjectName(u"totalOutEdit")
+
+        self.horizontalLayout.addWidget(self.totalOutEdit)
+
         self.label = QLabel(self.tab_utxos)
         self.label.setObjectName(u"label")
 
@@ -240,6 +260,8 @@ class Ui_walletInfoDialog(object):
 
     def retranslateUi(self, walletInfoDialog):
         walletInfoDialog.setWindowTitle(QCoreApplication.translate("walletInfoDialog", u"Dialog", None))
+        self.label_10.setText(QCoreApplication.translate("walletInfoDialog", u"In", None))
+        self.label_11.setText(QCoreApplication.translate("walletInfoDialog", u"Out", None))
         self.label.setText(QCoreApplication.translate("walletInfoDialog", u"Balance", None))
         self.utxoRefreshButton.setText(QCoreApplication.translate("walletInfoDialog", u"Refresh", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_utxos), QCoreApplication.translate("walletInfoDialog", u"UTXOs", None))

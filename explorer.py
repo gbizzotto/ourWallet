@@ -107,7 +107,7 @@ def get_transaction(txid, testnet):
                     get_transaction.cache[k] = transactions.Transaction.from_hex(v)
                     get_transaction.cache[k].metadata = get_transaction_metadata(binascii.unhexlify(k), testnet)
 
-    if txid.hex() not in get_transaction.cache:
+    if txid.hex() not in get_transaction.cache or get_transaction.cache[txid.hex()].metadata is None or get_transaction.cache[txid.hex()].metadata.height is None:
         tx, bintx = go_get_transaction(txid, testnet)
         if tx is None:
             return None
@@ -183,6 +183,63 @@ def get_utxos(wallet_name, address, derivation, testnet):
 
     # blockcypher
 
+def get_txos(wallet_name, address, derivation, testnet):
+    print("explorer get_txos", address, derivation)
+
+    incomings = {}
+    outgoings = []
+    outgoings_mempool = []
+
+    def go_get_txos(mempool):
+        # blockstream
+        network = "testnet/" if testnet else ""
+        mempool = "/mempool" if mempool else ""
+        url = "https://blockstream.info/"+network+"api/address/"+address+"/txs"+mempool
+        page = requests.get(url)
+        if page.status_code != 200:
+            print("page.status_code", page.status_code, "for URL", url)
+            return []
+        #print(page.text)
+        txos = json.loads(page.text)
+        for tx in txos:
+            txid = tx["txid"]
+            txid_bin = binascii.unhexlify(txid)
+            # is this an incoming or outgoing TX?
+            for vin in tx["vin"]:
+                if vin["prevout"]["scriptpubkey_address"] == address:
+                    if mempool:
+                        outgoings_mempool.append(vin["txid"]+":"+str(vin["vout"]))
+                    else:
+                        outgoings.append(vin["txid"]+":"+str(vin["vout"]))
+                    #print("outgoing:", outgoings[-1], mempool)
+            for voutid,vout in enumerate(tx["vout"]):
+                if vout["scriptpubkey_address"] == address:
+                    full_tx = get_transaction(txid_bin, testnet)
+                    txout = full_tx.outputs[voutid]
+                    txout.parent_tx = full_tx
+                    txout.metadata             = transactions.TxOutput.Metadata()
+                    txout.metadata.wallet_name = wallet_name
+                    txout.metadata.address     = address
+                    txout.metadata.derivation  = derivation
+                    txout.metadata.spent       = False
+                    txout.metadata.txid        = txid_bin
+                    txout.metadata.vout        = voutid
+                    incomings[txid+":"+str(voutid)] = txout
+                    #print("incoming:", txid+":"+str(voutid), mempool)
+
+    go_get_txos(False)
+    go_get_txos(True)
+
+    for outgoing in outgoings:
+        if outgoing in incomings:
+            #print(outgoing, "was spent")
+            incomings[outgoing].metadata.spent = True
+    for outgoing in outgoings_mempool:
+        if outgoing in incomings:
+            #print(outgoing, "was spent")
+            incomings[outgoing].metadata.spent = "Unconfirmed"
+    return incomings.values()
+
 def get_output_scriptpubkey(txid, vout, testnet):
     print("explorer get_output_scriptpubkey", txid.hex() + ":" + str(vout))
 
@@ -201,7 +258,6 @@ def get_current_height(testnet):
         return get_current_height.height
 
     print("explorer get_current_height")
-    get_current_height.epoch = epoch
 
     # blockstream
     network = "testnet/" if testnet else ""
@@ -209,6 +265,7 @@ def get_current_height(testnet):
     if page.status_code != 200:
         print("page.status_code", page.status_code)
         return None
+    get_current_height.epoch = epoch
     get_current_height.height = int(page.text)
     return get_current_height.height
 get_current_height.height = None
