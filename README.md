@@ -16,6 +16,7 @@ Full-control BTC wallet
 - :heavy_check_mark: Manage BIP32 wallets
 - :heavy_check_mark: Choose SigHash
 - :heavy_check_mark: Export/Import (un)signed TXs
-- :white_check_mark: Allow Dbl spend for better control over RBF
+- :heavy_check_mark: Allow Dbl spend for better control over RBF
+- Use public key online to check for UTXOs, use private key offline to sign TXs
 - Manage wallets that are a lose collection of private keys
 - Write custom Script (as in scriptpubkey and scriptsig)
