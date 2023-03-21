@@ -86,7 +86,7 @@ def save(wallet, parent_dialog):
     dialog = PasswordDialog(parent_dialog)
     if dialog.exec():
         pw = str.encode(dialog.pw)
-    if wallet.pwCheck:
+    if hasattr(wallet, 'pwCheck') and wallet.pwCheck:
         if ourCrypto.decrypt(wallet.pwCheck, pw) != "ourPassword":
             QMessageBox.warning(parent_dialog, "Wrong password", "Wrong password")
             return
