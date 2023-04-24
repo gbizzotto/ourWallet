@@ -187,6 +187,13 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="refreshSelectedAddressButton">
+           <property name="text">
+            <string>Refresh Selected</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>

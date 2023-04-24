@@ -146,6 +146,11 @@ class Ui_walletInfoDialog(object):
 
         self.horizontalLayout_2.addWidget(self.showMoreButton)
 
+        self.refreshSelectedAddressButton = QPushButton(self.tab_addresses)
+        self.refreshSelectedAddressButton.setObjectName(u"refreshSelectedAddressButton")
+
+        self.horizontalLayout_2.addWidget(self.refreshSelectedAddressButton)
+
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
 
@@ -274,6 +279,7 @@ class Ui_walletInfoDialog(object):
         self.toEdit.setInputMask(QCoreApplication.translate("walletInfoDialog", u"0000000000", None))
         self.toEdit.setText(QCoreApplication.translate("walletInfoDialog", u"20", None))
         self.showMoreButton.setText(QCoreApplication.translate("walletInfoDialog", u"Show", None))
+        self.refreshSelectedAddressButton.setText(QCoreApplication.translate("walletInfoDialog", u"Refresh Selected", None))
         self.qrcodeLabel.setText("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_addresses), QCoreApplication.translate("walletInfoDialog", u"Addresses", None))
         self.label_8.setText(QCoreApplication.translate("walletInfoDialog", u"Be sure to know what you're doing here", None))

@@ -147,6 +147,7 @@ class WalletInfoDialog(QDialog):
         self.ui.derivationSchemeComboBox.currentIndexChanged.connect(self.derivationSchemeChanged)
 
         self.ui.showMoreButton.clicked.connect(self.show_addresses)
+        self.ui.refreshSelectedAddressButton.clicked.connect(self.refresh_selected_utxos)
 
         self.ui.addressTypeComboBox.addItem('Legacy', wallets.LEGACY)
         self.ui.addressTypeComboBox.addItem('Segwit-legacy compatibility', wallets.COMPATIBILITY)
@@ -275,6 +276,30 @@ class WalletInfoDialog(QDialog):
             text = self.wallet.xpub(derivation)
         set_qr_label(self.ui.qrcodeLabel, text)
         self.ui.valueEdit.setText(text)
+
+    def refresh_selected_utxos(self):
+        changed = False
+
+        table = self.ui.addressTableWidget
+        if len(table.selectedIndexes()) == 0:
+            return
+        prev_row_idx = -1
+        for cell in table.selectedIndexes():
+            if cell.row() == prev_row_idx:
+                continue
+            derivation = table.item(cell.row(), 0).text()
+            address    = table.item(cell.row(), 1).text()
+            utxos = explorer.get_txos(self.wallet.name, address, derivation, testnet)
+            if len(utxos) == 0:
+                changed = self.wallet.remove_utxos_by_address(address) or changed
+            else:
+                for utxo in utxos:
+                    changed = self.wallet.add_utxo(utxo) or changed
+            prev_row_idx = cell.row()
+
+        if changed:
+            self.wallet.dirty = True
+            self.display_utxos(self.wallet.utxos)
 
     def refresh_utxos(self):
         changed = False
