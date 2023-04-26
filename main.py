@@ -32,7 +32,7 @@ auto_import("PySide6")
 auto_import("qrcode")
 auto_import("bip39")
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox, QAbstractItemView
+from PySide6.QtWidgets import QApplication, QMainWindow, QDialog, QDialogButtonBox, QMenu, QTableWidgetItem, QCheckBox, QWidgetAction, QFileDialog, QMessageBox, QAbstractItemView, QProgressDialog
 from PySide6.QtCore import QFile, QIODevice, Qt, QSize, QDateTime, QAbstractTableModel, QModelIndex, QItemSelectionModel, SIGNAL
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtGui import QPixmap, QPalette, QBrush, QColor
@@ -283,32 +283,62 @@ class WalletInfoDialog(QDialog):
         table = self.ui.addressTableWidget
         if len(table.selectedIndexes()) == 0:
             return
+
+        rows = []
         prev_row_idx = -1
         for cell in table.selectedIndexes():
             if cell.row() == prev_row_idx:
                 continue
-            derivation = table.item(cell.row(), 0).text()
-            address    = table.item(cell.row(), 1).text()
+            rows.append(cell.row())
+            prev_row_idx = cell.row()
+
+        progress = QProgressDialog("Refreshing...", "Abort", 0, len(rows), self)
+        progress.setWindowTitle("Updating " + self.wallet.name)
+        progress.setWindowModality(Qt.WindowModal)
+        progress.show()
+        progress.update()
+        for i in range(0, len(rows)):
+            progress.setValue(i)
+            progress.repaint()
+            if progress.wasCanceled():
+                break
+            derivation = table.item(rows[i], 0).text()
+            address    = table.item(rows[i], 1).text()
             utxos = explorer.get_txos(self.wallet.name, address, derivation, testnet)
             if len(utxos) == 0:
                 changed = self.wallet.remove_utxos_by_address(address) or changed
             else:
                 for utxo in utxos:
                     changed = self.wallet.add_utxo(utxo) or changed
-            prev_row_idx = cell.row()
+        progress.setValue(len(rows))
+        progress.update()
 
         if changed:
             self.wallet.dirty = True
             self.display_utxos(self.wallet.utxos)
 
     def refresh_utxos(self):
+        ahead = 20
+        total = ahead * 2
+        total_done = 0
         changed = False
+
+        progress = QProgressDialog("Refreshing...", "Abort", 0, 100, self)
+        progress.setWindowTitle("Updating " + self.wallet.name)
+        progress.setWindowModality(Qt.WindowModal)
+        progress.show()
+        progress.repaint()
+
         for derivation_pattern in (self.wallet.address_derivation, self.wallet.change_derivation):
             if 'x' in derivation_pattern:
-                ahead = 20
                 max = ahead
                 i = 0
                 while i < max:
+                    progress.setValue(100*total_done / total)
+                    progress.repaint()
+                    if progress.wasCanceled():
+                        break
+
                     derivation = derivation_pattern.replace("x", str(i))
                     address = self.wallet.address(derivation)
                     utxos = explorer.get_txos(self.wallet.name, address, derivation, testnet)
@@ -317,12 +347,19 @@ class WalletInfoDialog(QDialog):
                     else:
                         for utxo in utxos:
                             changed = self.wallet.add_utxo(utxo) or changed
+                            total = total - max + i + ahead
                             max = i+ahead
                     i += 1
+                    total_done += 1
+                if progress.wasCanceled():
+                    break
             else:
                 address = self.wallet.address(derivation_pattern)
                 for utxo in explorer.get_utxos(self.wallet.name, address, derivation_pattern, testnet):
                     changed = changed or self.wallet.add_utxo(utxo)
+
+        progress.setValue(100)
+        progress.repaint()
 
         current_height = explorer.get_current_height(testnet)
         if self.current_height != current_height:
