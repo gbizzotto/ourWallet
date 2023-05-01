@@ -330,9 +330,6 @@ class Ui_MainWindow(object):
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        self.toolBar = QToolBar(MainWindow)
-        self.toolBar.setObjectName(u"toolBar")
-        MainWindow.addToolBar(Qt.TopToolBarArea, self.toolBar)
 
         self.menubar.addAction(self.menuTX.menuAction())
         self.menubar.addAction(self.menuWallets.menuAction())
@@ -398,6 +395,5 @@ class Ui_MainWindow(object):
         self.labelNetwork.setText("")
         self.menuTX.setTitle(QCoreApplication.translate("MainWindow", u"TX", None))
         self.menuWallets.setTitle(QCoreApplication.translate("MainWindow", u"Wallets", None))
-        self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))
     # retranslateUi
 
