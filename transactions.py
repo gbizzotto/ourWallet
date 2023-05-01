@@ -345,11 +345,14 @@ class Transaction:
 
         if has_segwit:
             t.witnesses = []
-            wit_count = stream.read_varint()
-            for i in range(wit_count):
-                wit_length = stream.read_varint()
-                wit_script = stream.read_chunk(wit_length)
-                t.witnesses.append(wit_script)
+            for idx in range(len(t.inputs)):
+                entries = []
+                wit_count = stream.read_varint()
+                for i in range(wit_count):
+                    wit_length = stream.read_varint()
+                    wit_script = stream.read_chunk(wit_length)
+                    entries.append(wit_script)
+                t.witnesses.append(entries)
 
         t.locktime = stream.read_int(4)
         return t
