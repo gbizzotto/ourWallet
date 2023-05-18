@@ -905,10 +905,10 @@ class MainWindow(QMainWindow):
         self.ui.signOneButton.setMenu(m)
 
         if testnet:
-            pixmap = QPixmap("bitcoin_testnet.png")
+            pixmap = QPixmap(os.path.dirname(os.path.realpath(__file__)) + "/bitcoin_testnet.png")
             txt = "Testnet"
         else:
-            pixmap = QPixmap("bitcoin_mainnet.png")
+            pixmap = QPixmap(os.path.dirname(os.path.realpath(__file__)) + "/bitcoin_mainnet.png")
             txt = "Mainnet"
         self.ui.labelLogo.setPixmap(pixmap.scaled(45, 45, Qt.KeepAspectRatio))
         self.ui.labelNetwork.setText(txt)
