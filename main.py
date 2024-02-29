@@ -777,7 +777,9 @@ class OutputsTableModel(QAbstractTableModel):
             if address_type == scriptVM.P2PKH:
                 bin_address = Base58.check_decode(value)[1:]
                 output.scriptpubkey = scriptVM.make_P2PKH_scriptpubkey(bin_address)
-            # TODO elif address_type == scriptVM.P2SH:
+            elif address_type == scriptVM.P2SH:
+                bin_address = Base58.check_decode(value)[1:]
+                output.scriptpubkey = scriptVM.make_P2SH_scriptpubkey(bin_address)
             # TODO elif address_type == scriptVM.P2MS:
             elif address_type == scriptVM.P2WPKH:
                 bin_address = bytes(bech32.decode('tb' if testnet else 'bc', value)[1])

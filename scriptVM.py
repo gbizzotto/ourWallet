@@ -61,7 +61,7 @@ def get_address(script, testnet):
         return bip32utils.Base58.check_encode(vh160)
     elif len(parsed_script) == 3 and parsed_script[0] == RunnerVM.OP_HASH160 and parsed_script[2] == RunnerVM.OP_EQUAL:
         addressversion = PREFIX_MAINNET_SH if not testnet else PREFIX_TESTNET_SH
-        addressBytes = hashlib.new('ripemd160', sha256(scriptSig).digest()).digest()
+        addressBytes = hashlib.new('ripemd160', sha256(parsed_script[1]).digest()).digest()
         vh160 = addressversion + parsed_script[1]
         return bip32utils.Base58.check_encode(vh160)
     elif len(parsed_script) >= 4 and parsed_script[-1] == RunnerVM.OP_CHECKMULTISIG \
@@ -99,6 +99,9 @@ def address_type(address):
 
 def make_P2PKH_scriptpubkey(bin_address):
     return bytearray([0x76, 0xa9, len(bin_address)]) + bin_address + bytes([0x88, 0xac])
+
+def make_P2SH_scriptpubkey(bin_address):
+    return bytearray([0xa9, len(bin_address)]) + bin_address + bytes([0x87])
 
 def make_P2PWPKH_scriptpubkey(bin_address):
     return bytes([0x00, len(bin_address)]) + bin_address
