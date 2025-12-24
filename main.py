@@ -1105,8 +1105,18 @@ class MainWindow(QMainWindow):
         return saul_goodman
 
     def verify(self):
-        if self.verify_all():
-            self.ui.broadcastPushButton.setEnabled(True)
+        if not self.verify_all():
+            return
+
+        # check fee
+        fee_per_byte = self.transaction_fee / self.transaction_virtual_size
+        if fee_per_byte > 100:
+            action = QMessageBox.question(self, "WAT", 'Fee > 100sat/B', QMessageBox.Yes| QMessageBox.No)
+            if action != QMessageBox.Yes:
+                return
+
+        self.ui.broadcastPushButton.setEnabled(True)
+
 
     def sign_selected(self, sighash_type):
         if self.ui.PreventFeeSnipingCheckBox.isChecked():
